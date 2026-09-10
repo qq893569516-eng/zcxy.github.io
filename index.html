@@ -1,0 +1,2951 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>多媒体报修系统</title>
+<style>
+  /* ===== 全局重置 ===== */
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+  body {
+    font-family: "Microsoft YaHei", "SimSun", "PingFang SC", sans-serif;
+    background: #f0f2f5;
+    color: #1a1a1a;
+    min-width: 900px;
+  }
+
+  /* ===== 顶部工具栏 ===== */
+  .toolbar {
+    background: #1a3a6b;
+    color: #fff;
+    padding: 14px 28px;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    position: sticky;
+    top: 0;
+    z-index: 100;
+    box-shadow: 0 2px 8px rgba(0,0,0,0.15);
+  }
+  .toolbar h1 {
+    font-size: 18px;
+    font-weight: 600;
+    letter-spacing: 1px;
+  }
+  .toolbar-actions {
+    display: flex;
+    gap: 10px;
+    align-items: center;
+  }
+  .search-box {
+    position: relative;
+    display: flex;
+    align-items: center;
+  }
+  .search-box input {
+    width: 220px;
+    padding: 7px 30px 7px 12px;
+    border: 1px solid rgba(255,255,255,0.3);
+    border-radius: 4px;
+    background: rgba(255,255,255,0.12);
+    color: #fff;
+    font-size: 13px;
+    outline: none;
+    transition: all 0.2s;
+  }
+  .search-box input::placeholder { color: rgba(255,255,255,0.6); }
+  .search-box input:focus {
+    background: rgba(255,255,255,0.2);
+    border-color: rgba(255,255,255,0.5);
+    width: 280px;
+  }
+  .search-box .search-clear {
+    position: absolute;
+    right: 6px;
+    top: 50%;
+    transform: translateY(-50%);
+    background: none;
+    border: none;
+    color: rgba(255,255,255,0.7);
+    font-size: 18px;
+    cursor: pointer;
+    padding: 0 4px;
+    line-height: 1;
+  }
+  .search-box .search-clear:hover { color: #fff; }
+  .toolbar-actions .count-badge {
+    background: rgba(255,255,255,0.15);
+    padding: 6px 14px;
+    border-radius: 4px;
+    font-size: 13px;
+  }
+  .btn {
+    padding: 8px 18px;
+    border: none;
+    border-radius: 4px;
+    font-size: 14px;
+    cursor: pointer;
+    transition: all 0.2s;
+    font-family: inherit;
+  }
+  .btn-primary { background: #4a90d9; color: #fff; }
+  .btn-primary:hover { background: #3a7bc8; }
+  .btn-success { background: #2eaa5b; color: #fff; }
+  .btn-success:hover { background: #259049; }
+  .btn-danger { background: #d94a4a; color: #fff; }
+  .btn-danger:hover { background: #c03a3a; }
+  .btn-warn { background: #e6a23c; color: #fff; }
+  .btn-warn:hover { background: #cf8f2e; }
+  .btn-secondary { background: #6c757d; color: #fff; }
+  .btn-secondary:hover { background: #5a6268; }
+  .btn:disabled { opacity: 0.4; cursor: not-allowed; }
+  .btn:disabled:hover { opacity: 0.4; }
+  .btn-outline {
+    background: transparent;
+    color: #fff;
+    border: 1px solid rgba(255,255,255,0.4);
+  }
+  .btn-outline:hover { background: rgba(255,255,255,0.1); }
+  .btn-gray { background: #f0f0f0; color: #333; }
+  .btn-gray:hover { background: #e0e0e0; }
+
+  /* ===== 导出下拉菜单 ===== */
+  .export-dropdown { position: relative; display: inline-block; }
+  .export-menu {
+    display: none;
+    position: absolute;
+    top: 100%;
+    right: 0;
+    background: #fff;
+    border: 1px solid #e8e8e8;
+    border-radius: 6px;
+    box-shadow: 0 6px 20px rgba(0,0,0,0.15);
+    min-width: 200px;
+    z-index: 200;
+    margin-top: 6px;
+    overflow: hidden;
+  }
+  .export-menu.show { display: block; }
+  .export-menu .menu-item {
+    padding: 11px 18px;
+    font-size: 14px;
+    color: #333;
+    cursor: pointer;
+    transition: background 0.15s;
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    border-bottom: 1px solid #f5f5f5;
+  }
+  .export-menu .menu-item:last-child { border-bottom: none; }
+  .export-menu .menu-item:hover { background: #f5f9ff; color: #4a90d9; }
+  .export-menu .menu-item .fmt-icon {
+    width: 22px; height: 22px;
+    border-radius: 4px;
+    display: flex; align-items: center; justify-content: center;
+    font-size: 10px; font-weight: 700; color: #fff; flex-shrink: 0;
+  }
+  .export-menu .menu-item .fmt-desc {
+    font-size: 11px; color: #999; margin-left: auto;
+  }
+  .export-filter {
+    padding: 12px 16px 8px;
+    border-bottom: 1px solid #eee;
+  }
+  .export-filter .filter-title {
+    font-size: 12px;
+    color: #888;
+    margin-bottom: 8px;
+    font-weight: 600;
+  }
+  .export-filter .filter-row {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    margin-bottom: 6px;
+  }
+  .export-filter .filter-row label {
+    font-size: 13px;
+    color: #555;
+    width: 32px;
+    flex-shrink: 0;
+  }
+  .export-filter .filter-row input[type="date"] {
+    flex: 1;
+    padding: 5px 8px;
+    border: 1px solid #d9d9d9;
+    border-radius: 4px;
+    font-size: 13px;
+    outline: none;
+  }
+  .export-filter .filter-row input[type="date"]:focus {
+    border-color: #4a90d9;
+  }
+  .export-filter .filter-hint {
+    font-size: 11px;
+    color: #999;
+    margin-top: 4px;
+  }
+  .export-filter .filter-divider {
+    height: 1px;
+    background: #f0f0f0;
+    margin: 8px -16px 0;
+  }
+
+  /* ===== 打印样式（PDF导出用） ===== */
+  @media print {
+    .toolbar, .add-form-btn, .footer-hint, .card-header, .toast, .modal-mask, .export-menu, .print-hidden, .now-btn {
+      display: none !important;
+    }
+    @page { size: A4; margin: 0; }
+    html, body { background: #fff; min-width: auto; margin: 0; padding: 0; }
+    .form-container {
+      max-width: 100%;
+      margin: 0;
+      padding: 2.54cm 3.17cm;
+    }
+    .repair-card {
+      border: none;
+      box-shadow: none;
+      margin-bottom: 0;
+      page-break-inside: avoid;
+    }
+    .repair-card.print-odd {
+      margin-bottom: 12pt;
+    }
+    .repair-card.print-even {
+      page-break-after: always;
+    }
+    .repair-card.print-last { page-break-after: auto; }
+    .repair-form { padding: 0; page-break-inside: avoid; font-family: SimSun, serif; }
+    .repair-form .form-title {
+      font-size: 18pt;
+      margin: 0 0 4pt 0;
+      letter-spacing: 1pt;
+      line-height: 1.3;
+      page-break-after: avoid;
+      font-weight: bold;
+    }
+    .repair-table {
+      width: 100%;
+      border-collapse: collapse;
+      table-layout: fixed;
+      font-size: 10.5pt;
+    }
+    .repair-table td {
+      border: 1px solid #333;
+      padding: 3px;
+      vertical-align: middle;
+      overflow: hidden;
+      word-break: break-all;
+    }
+    .repair-table .label-cell {
+      text-align: center;
+      font-weight: bold;
+      white-space: nowrap;
+      overflow: hidden;
+    }
+    /* 明确各列宽度，4列结构：标签15% 内容35% 标签15% 内容35% */
+    .repair-table tr:first-child td:nth-child(1) { width: 15%; }
+    .repair-table tr:first-child td:nth-child(2) { width: 35%; }
+    .repair-table tr:first-child td:nth-child(3) { width: 15%; }
+    .repair-table tr:first-child td:nth-child(4) { width: 35%; }
+    .repair-table tr:first-child { height: 17pt; }
+    .repair-table tr:nth-child(2) { height: 17pt; }
+    .repair-table .content-row { height: 55pt; }
+    .repair-table .content-row td { vertical-align: top; }
+    .repair-table tr:nth-child(4) { height: 17pt; }
+    .repair-table .process-row { height: 75pt; }
+    .repair-table .process-row td { vertical-align: top; }
+    .repair-table .result-row { height: 36pt; }
+    .repair-table .result-row td { vertical-align: top; }
+    .repair-table .remark-row { height: 36pt; }
+    .repair-table .remark-row td { vertical-align: top; }
+    .repair-table input, .repair-table textarea, .repair-table select {
+      border: none;
+      background: transparent;
+      width: 100%;
+      font-size: 10.5pt;
+      font-family: inherit;
+      padding: 0;
+      outline: none;
+      -webkit-appearance: none;
+      appearance: none;
+    }
+    .repair-table input[type="datetime-local"] { width: 100%; }
+    .repair-table textarea {
+      resize: none;
+      overflow: hidden;
+      line-height: 1.6;
+    }
+    .repair-table .img-placeholder,
+    .repair-table .img-actions button {
+      display: none !important;
+    }
+    .repair-table .process-image-wrap img {
+      max-width: 130px;
+      max-height: 70px;
+      margin-top: 4px;
+      border: 1px solid #ddd;
+    }
+  }
+
+  /* ===== 表单区域 ===== */
+  .form-container {
+    max-width: 900px;
+    margin: 24px auto;
+    padding: 0 20px 60px;
+  }
+
+  /* ===== 单张报修单 ===== */
+  .repair-card {
+    background: #fff;
+    border: 1px solid #d9d9d9;
+    border-radius: 4px;
+    margin-bottom: 24px;
+    box-shadow: 0 1px 4px rgba(0,0,0,0.06);
+    overflow: hidden;
+    position: relative;
+  }
+  .repair-card .card-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 8px 14px;
+    background: #f7f8fa;
+    border-bottom: 1px solid #e8e8e8;
+  }
+  .repair-card .card-index {
+    font-size: 13px;
+    color: #666;
+    font-weight: 600;
+  }
+  .repair-card .card-actions {
+    display: flex;
+    gap: 6px;
+  }
+  .repair-card .btn-sm {
+    background: none;
+    border: 1px solid transparent;
+    cursor: pointer;
+    font-size: 12px;
+    padding: 4px 10px;
+    border-radius: 3px;
+    transition: all 0.2s;
+    font-family: inherit;
+  }
+  .repair-card .btn-paste {
+    color: #e6a23c;
+  }
+  .repair-card .btn-paste:hover {
+    background: #fdf6ec;
+    border-color: #e6a23c;
+  }
+  .repair-card .btn-delete {
+    color: #999;
+  }
+  .repair-card .btn-delete:hover {
+    color: #d94a4a;
+    background: #fef0f0;
+  }
+
+  /* ===== 报修单表格 ===== */
+  .repair-form {
+    padding: 18px 22px 22px;
+  }
+  .repair-form .form-title {
+    text-align: center;
+    font-size: 20px;
+    font-weight: 700;
+    margin-bottom: 14px;
+    letter-spacing: 2px;
+    color: #1a1a1a;
+  }
+  .repair-table {
+    width: 100%;
+    border-collapse: collapse;
+    table-layout: fixed;
+  }
+  .repair-table td {
+    border: 1px solid #333;
+    padding: 6px 10px;
+    font-size: 14px;
+    vertical-align: middle;
+  }
+  .repair-table .label-cell {
+    background: #fafafa;
+    font-weight: 600;
+    text-align: center;
+    width: 96px;
+    white-space: nowrap;
+  }
+  .repair-table .input-cell {
+    padding: 4px 8px;
+  }
+  .repair-table input[type="text"],
+  .repair-table input[type="tel"],
+  .repair-table input[type="datetime-local"],
+  .repair-table select {
+    width: 100%;
+    border: none;
+    outline: none;
+    font-size: 14px;
+    font-family: inherit;
+    background: transparent;
+    padding: 2px 0;
+  }
+  .repair-table input[type="datetime-local"] {
+    font-size: 13px;
+    width: 100%;
+  }
+  .now-btn {
+    display: inline-block;
+    font-size: 9px;
+    padding: 1px 4px;
+    margin-left: 2px;
+    background: #4a90d9;
+    color: #fff;
+    border: none;
+    border-radius: 2px;
+    cursor: pointer;
+    vertical-align: middle;
+    white-space: nowrap;
+    line-height: 1.3;
+  }
+  .now-btn:hover { background: #3a7bc8; }
+  .repair-table textarea {
+    width: 100%;
+    border: none;
+    outline: none;
+    font-size: 14px;
+    font-family: inherit;
+    resize: none;
+    background: transparent;
+    line-height: 1.6;
+    padding: 4px 0;
+  }
+  .repair-table .content-row td {
+    height: 80px;
+    vertical-align: top;
+  }
+  .repair-table .process-row td {
+    height: 110px;
+    vertical-align: top;
+  }
+  .repair-table .process-cell {
+    position: relative;
+  }
+  .process-image-wrap {
+    margin-top: 6px;
+    display: flex;
+    align-items: flex-start;
+    gap: 10px;
+    transition: all 0.2s;
+  }
+  .process-image-wrap.drag-over {
+    outline: 2px dashed #4a90d9;
+    outline-offset: 6px;
+    background: #f0f7ff;
+    border-radius: 4px;
+    padding: 6px;
+  }
+  .process-image-wrap img {
+    max-width: 160px;
+    max-height: 90px;
+    border: 1px solid #ddd;
+    border-radius: 2px;
+    object-fit: cover;
+  }
+  .process-image-wrap .img-placeholder {
+    width: 160px;
+    height: 90px;
+    border: 1px dashed #ccc;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: #aaa;
+    font-size: 12px;
+    cursor: pointer;
+    border-radius: 2px;
+    transition: all 0.2s;
+  }
+  .process-image-wrap .img-placeholder:hover {
+    border-color: #4a90d9;
+    color: #4a90d9;
+    background: #f5f9ff;
+  }
+  .process-image-wrap .img-actions {
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+  }
+  .process-image-wrap .img-actions button {
+    font-size: 11px;
+    padding: 3px 8px;
+    border: 1px solid #ddd;
+    background: #fff;
+    cursor: pointer;
+    border-radius: 3px;
+    color: #666;
+  }
+  .process-image-wrap .img-actions button:hover {
+    border-color: #4a90d9;
+    color: #4a90d9;
+  }
+  .repair-table .status-select {
+    font-weight: 600;
+  }
+  .repair-table .result-row td {
+    height: 56px;
+    vertical-align: top;
+  }
+  .repair-table .remark-row td {
+    height: 56px;
+    vertical-align: top;
+  }
+  .status-select-inline {
+    font-size: 12px;
+    padding: 3px 6px;
+    border: 1px solid #dcdfe6;
+    border-radius: 3px;
+    background: #fff;
+    color: #606266;
+    cursor: pointer;
+    outline: none;
+    font-family: inherit;
+  }
+  .status-select-inline:focus {
+    border-color: #4a90d9;
+  }
+
+  /* ===== 底部提示 ===== */
+  .footer-hint {
+    text-align: center;
+    color: #999;
+    font-size: 12px;
+    margin-top: 10px;
+    padding-bottom: 30px;
+  }
+
+  /* ===== 新增按钮 ===== */
+  .add-form-btn {
+    display: block;
+    width: 100%;
+    max-width: 900px;
+    margin: 0 auto 24px;
+    padding: 14px;
+    background: #fff;
+    border: 2px dashed #c0c4cc;
+    border-radius: 4px;
+    color: #909399;
+    font-size: 14px;
+    cursor: pointer;
+    transition: all 0.2s;
+    font-family: inherit;
+  }
+  .add-form-btn:hover {
+    border-color: #4a90d9;
+    color: #4a90d9;
+    background: #f5f9ff;
+  }
+
+  /* ===== Toast 提示 ===== */
+  .toast {
+    position: fixed;
+    top: 70px;
+    left: 50%;
+    transform: translateX(-50%);
+    background: rgba(0,0,0,0.75);
+    color: #fff;
+    padding: 10px 24px;
+    border-radius: 4px;
+    font-size: 14px;
+    z-index: 9999;
+    opacity: 0;
+    transition: opacity 0.3s;
+    pointer-events: none;
+    max-width: 80%;
+    text-align: center;
+  }
+  .toast.show { opacity: 1; }
+
+  /* ===== 智能粘贴模态框 ===== */
+  .modal-mask {
+    display: none;
+    position: fixed;
+    top: 0; left: 0; right: 0; bottom: 0;
+    background: rgba(0,0,0,0.5);
+    z-index: 500;
+    justify-content: center;
+    align-items: center;
+  }
+  .modal-mask.show { display: flex; }
+  .modal-box {
+    background: #fff;
+    border-radius: 8px;
+    width: 640px;
+    max-width: 92vw;
+    max-height: 85vh;
+    display: flex;
+    flex-direction: column;
+    box-shadow: 0 8px 32px rgba(0,0,0,0.2);
+    overflow: hidden;
+  }
+  .modal-header {
+    padding: 16px 20px;
+    border-bottom: 1px solid #e8e8e8;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+  }
+  .modal-header h3 { font-size: 16px; font-weight: 600; }
+  .modal-close {
+    background: none; border: none; font-size: 20px;
+    cursor: pointer; color: #999; line-height: 1;
+    padding: 4px 8px; border-radius: 4px;
+  }
+  .modal-close:hover { background: #f5f5f5; color: #333; }
+  .modal-body {
+    padding: 18px 20px;
+    overflow-y: auto;
+    flex: 1;
+  }
+  .modal-body textarea {
+    width: 100%;
+    min-height: 160px;
+    border: 1px solid #d9d9d9;
+    border-radius: 4px;
+    padding: 10px 12px;
+    font-size: 14px;
+    font-family: inherit;
+    resize: vertical;
+    outline: none;
+    line-height: 1.6;
+  }
+  .modal-body textarea:focus { border-color: #4a90d9; }
+  .modal-hint {
+    font-size: 12px;
+    color: #999;
+    margin-top: 8px;
+    line-height: 1.7;
+  }
+  .modal-hint code {
+    background: #f5f5f5;
+    padding: 1px 5px;
+    border-radius: 3px;
+    font-size: 11px;
+    color: #555;
+  }
+
+  /* ===== 设置面板 ===== */
+  .settings-section {
+    margin-bottom: 20px;
+  }
+  .settings-section h4 {
+    font-size: 14px;
+    font-weight: 600;
+    margin-bottom: 10px;
+    color: #333;
+  }
+  .setting-row {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    margin-bottom: 10px;
+  }
+  .setting-row label {
+    width: 140px;
+    font-size: 13px;
+    color: #555;
+    flex-shrink: 0;
+  }
+  .setting-row input[type="number"] {
+    width: 80px;
+    padding: 6px 8px;
+    border: 1px solid #d9d9d9;
+    border-radius: 4px;
+    font-size: 13px;
+  }
+  .setting-row .unit {
+    font-size: 12px;
+    color: #999;
+  }
+  .setting-row .hint {
+    font-size: 11px;
+    color: #bbb;
+    margin-left: auto;
+  }
+  .backup-list {
+    border: 1px solid #e8e8e8;
+    border-radius: 4px;
+    max-height: 240px;
+    overflow-y: auto;
+  }
+  .backup-item {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 8px 12px;
+    border-bottom: 1px solid #f0f0f0;
+  }
+  .backup-item:last-child { border-bottom: none; }
+  .backup-info { display: flex; gap: 12px; align-items: center; }
+  .backup-time { font-size: 13px; font-weight: 500; color: #333; }
+  .backup-count { font-size: 12px; color: #999; }
+  .backup-actions { display: flex; gap: 6px; }
+  .btn-sm {
+    font-size: 11px;
+    padding: 3px 8px;
+  }
+  .backup-empty {
+    padding: 20px;
+    text-align: center;
+    color: #bbb;
+    font-size: 13px;
+  }
+  .modal-footer {
+    padding: 12px 20px;
+    border-top: 1px solid #e8e8e8;
+    display: flex;
+    justify-content: flex-end;
+    gap: 8px;
+  }
+  .parse-result {
+    margin-top: 14px;
+    display: none;
+    background: #f9fafb;
+    border: 1px solid #e8e8e8;
+    border-radius: 4px;
+    padding: 12px 14px;
+  }
+  .parse-result.show { display: block; }
+  .parse-result h4 {
+    font-size: 13px;
+    color: #666;
+    margin-bottom: 8px;
+    font-weight: 600;
+  }
+  .parse-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 4px 16px;
+  }
+  .parse-item {
+    display: flex;
+    font-size: 13px;
+    line-height: 1.8;
+  }
+  .parse-item .parse-label {
+    color: #888;
+    min-width: 64px;
+    flex-shrink: 0;
+  }
+  .parse-item .parse-value {
+    color: #1a1a1a;
+    font-weight: 500;
+    word-break: break-all;
+  }
+  .parse-item .parse-value.empty { color: #ccc; }
+  .parse-item.full { grid-column: 1 / -1; }
+  .current-fields {
+    background: #f0f7ff;
+    border: 1px solid #d0e3f7;
+    border-radius: 4px;
+    padding: 10px 12px;
+    margin-bottom: 12px;
+  }
+  .current-fields .cf-title {
+    font-size: 12px;
+    color: #4a90d9;
+    font-weight: 600;
+    margin-bottom: 6px;
+  }
+  .current-fields .cf-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 2px 12px;
+  }
+  .current-fields .cf-item {
+    font-size: 12px;
+    display: flex;
+    line-height: 1.7;
+  }
+  .current-fields .cf-label {
+    color: #888;
+    min-width: 56px;
+    flex-shrink: 0;
+  }
+  .current-fields .cf-value {
+    color: #333;
+    font-weight: 500;
+    word-break: break-all;
+  }
+  .current-fields .cf-empty {
+    color: #bbb;
+    font-size: 12px;
+  }
+  .modal-footer {
+    padding: 12px 20px;
+    border-top: 1px solid #e8e8e8;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    gap: 10px;
+  }
+  .modal-footer .shortcut-hint {
+    font-size: 12px;
+    color: #999;
+  }
+  .modal-footer .actions {
+    display: flex;
+    gap: 10px;
+  }
+</style>
+</head>
+<body>
+
+<!-- ===== 顶部工具栏 ===== -->
+<div class="toolbar">
+  <h1>多媒体报修系统</h1>
+  <div class="toolbar-actions">
+    <div class="search-box">
+      <input type="text" id="searchInput" placeholder="搜索报修人/地点/内容/维修人…" oninput="applySearch()">
+      <button class="search-clear" id="searchClear" onclick="clearSearch()" style="display:none;">&times;</button>
+    </div>
+    <span class="count-badge" id="formCount">共 0 张报修单</span>
+    <button class="btn btn-warn" onclick="openPasteModal()">&#xf0ea; 智能粘贴识别</button>
+    <button class="btn btn-secondary" id="undoBtn" onclick="undo()" disabled>&#x21B6; 撤销</button>
+    <button class="btn btn-secondary" id="redoBtn" onclick="redo()" disabled>&#x21B7; 恢复</button>
+    <button class="btn btn-primary" onclick="manualSave()">保存</button>
+    <button class="btn btn-outline" onclick="openSettingsModal()">&#x2699; 设置</button>
+    <button class="btn btn-primary" onclick="addForm()">+ 新增报修单</button>
+    <div class="export-dropdown">
+      <button class="btn btn-success" onclick="toggleExportMenu(event)">导出文件 ▾</button>
+      <div class="export-menu" id="exportMenu">
+        <div class="export-filter">
+          <div class="filter-title">导出范围（按报修时间）</div>
+          <div class="filter-row">
+            <label>开始</label>
+            <input type="date" id="filterStart" onchange="updateFilterCount()">
+          </div>
+          <div class="filter-row">
+            <label>结束</label>
+            <input type="date" id="filterEnd" onchange="updateFilterCount()">
+          </div>
+          <div class="filter-hint" id="filterHint">不填则导出全部</div>
+          <div class="filter-divider"></div>
+        </div>
+        <div class="menu-item" onclick="exportExcel()">
+          <span class="fmt-icon" style="background:#2eaa5b;">X</span>
+          <span>Excel 表格</span>
+          <span class="fmt-desc">.xls</span>
+        </div>
+        <div class="menu-item" onclick="exportPDF()">
+          <span class="fmt-icon" style="background:#d94a4a;">P</span>
+          <span>PDF 文档</span>
+          <span class="fmt-desc">打印另存</span>
+        </div>
+        <div class="filter-divider"></div>
+        <div class="menu-item" onclick="exportBackup()">
+          <span class="fmt-icon" style="background:#6c757d;">B</span>
+          <span>导出备份</span>
+          <span class="fmt-desc">.json 含图片</span>
+        </div>
+        <div class="menu-item" onclick="importBackup()">
+          <span class="fmt-icon" style="background:#17a2b8;">R</span>
+          <span>导入恢复</span>
+          <span class="fmt-desc">选择备份文件</span>
+        </div>
+      </div>
+    </div>
+    <button class="btn btn-outline" onclick="clearAll()">清空全部</button>
+  </div>
+</div>
+
+<!-- ===== 表单容器 ===== -->
+<div class="form-container" id="formContainer"></div>
+
+<!-- ===== 新增按钮 ===== -->
+<button class="add-form-btn" onclick="addForm()">+ 点击新增报修单</button>
+
+<div class="footer-hint">快捷键：Ctrl+Shift+V 打开智能粘贴 &nbsp;|&nbsp; 填写完一张单并将状态设为"完成"后自动生成新单</div>
+
+<!-- Toast -->
+<div class="toast" id="toast"></div>
+
+<!-- ===== 智能粘贴模态框 ===== -->
+<div class="modal-mask" id="pasteModal">
+  <div class="modal-box">
+    <div class="modal-header">
+      <h3>智能粘贴识别</h3>
+      <button class="modal-close" onclick="closePasteModal()">&times;</button>
+    </div>
+    <div class="modal-body">
+      <div class="current-fields" id="currentFields">
+        <div class="cf-title">当前表单已有内容（增量填入，默认不覆盖）</div>
+        <div class="cf-grid" id="currentFieldsGrid"></div>
+      </div>
+      <textarea id="pasteInput" placeholder="将报修信息粘贴到这里，例如：&#10;报修人：李邦元 地点：东教304 时间：2026-8-27 7:53 电话：13800138000&#10;报修内容：电脑不开机，开机指示灯不亮&#10;&#10;支持分段粘贴：每次只识别填入对应字段，不影响已填内容。"></textarea>
+      <div class="modal-hint">
+        支持识别：报修人、地点（教室/楼栋）、报修时间、维修时间、电话、报修内容、故障处理记录、维修人员、备注、处理状态。<br>
+        可分多次粘贴不同片段，每次只填入识别到的空白字段。
+      </div>
+      <div class="parse-result" id="parseResult">
+        <h4>识别结果预览</h4>
+        <div class="parse-grid" id="parseGrid"></div>
+      </div>
+    </div>
+    <div class="modal-footer">
+      <label style="font-size:12px;color:#666;display:flex;align-items:center;gap:5px;cursor:pointer;">
+        <input type="checkbox" id="overwriteCheck"> 覆盖已有字段
+      </label>
+      <div class="actions">
+        <button class="btn btn-gray" onclick="closePasteModal()">取消</button>
+        <button class="btn btn-primary" onclick="doParse()">识别预览</button>
+        <button class="btn btn-success" id="fillBtn" onclick="doFill()" disabled style="opacity:0.5;cursor:not-allowed;">填入报修单</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ===== 设置模态框 ===== -->
+<div class="modal-mask" id="settingsModal">
+  <div class="modal-box">
+    <div class="modal-header">
+      <h3>设置与备份管理</h3>
+      <button class="modal-close" onclick="closeSettingsModal()">&times;</button>
+    </div>
+    <div class="modal-body">
+      <div class="settings-section">
+        <h4>自动保存</h4>
+        <div class="setting-row">
+          <label>自动保存间隔</label>
+          <input type="number" id="setAutoSave" min="0" max="120" value="5">
+          <span class="unit">分钟</span>
+          <span class="hint">填0表示关闭</span>
+        </div>
+      </div>
+      <div class="settings-section">
+        <h4>自动备份</h4>
+        <div class="setting-row">
+          <label>自动备份间隔</label>
+          <input type="number" id="setAutoBackup" min="0" max="240" value="30">
+          <span class="unit">分钟</span>
+          <span class="hint">填0表示关闭</span>
+        </div>
+        <div class="setting-row">
+          <label>保留备份数量</label>
+          <input type="number" id="setMaxBackups" min="1" max="20" value="5">
+          <span class="unit">份</span>
+          <span class="hint">最多20份</span>
+        </div>
+      </div>
+      <div class="settings-section">
+        <h4>自动备份记录</h4>
+        <div class="backup-list" id="backupList"></div>
+      </div>
+    </div>
+    <div class="modal-footer">
+      <button class="btn btn-gray" onclick="closeSettingsModal()">取消</button>
+      <button class="btn btn-primary" onclick="applySettings()">保存设置</button>
+    </div>
+  </div>
+</div>
+
+<!-- 人员可选列表 -->
+<datalist id="reporterOptions">
+  <option value="李邦元">
+  <option value="郑齐">
+</datalist>
+<datalist id="repairerOptions">
+  <option value="邱锦辉">
+  <option value="吴传有">
+  <option value="洪鹏">
+  <option value="洪敏">
+</datalist>
+
+<script>
+// ============================================================
+// 状态管理
+// ============================================================
+var forms = [];
+var formIdCounter = 0;
+var currentParsed = null;      // 当前解析结果
+var pasteTargetFormId = null;  // 要填入的目标表单ID（null=新建）
+var STORAGE_KEY = 'fzu_zc_repair_forms_v1';
+var saveTimer = null;
+
+// ============================================================
+// 工具函数
+// ============================================================
+function generateId() {
+  return 'form_' + (++formIdCounter) + '_' + Date.now();
+}
+
+function showToast(msg) {
+  var t = document.getElementById('toast');
+  t.textContent = msg;
+  t.classList.add('show');
+  setTimeout(function() { t.classList.remove('show'); }, 2500);
+}
+
+function getNowString() {
+  var d = new Date();
+  var pad = function(n) { return n < 10 ? '0' + n : n; };
+  return d.getFullYear() + '-' + pad(d.getMonth()+1) + '-' + pad(d.getDate()) +
+         'T' + pad(d.getHours()) + ':' + pad(d.getMinutes());
+}
+
+// 点击"现在"按钮，填充当前时间到对应字段的datetime-local输入框
+function fillNow(btn) {
+  var field = btn.getAttribute('data-field');
+  var table = btn.closest('table');
+  var input = table.querySelector('input[data-field="' + field + '"]');
+  if (input) {
+    input.value = getNowString();
+    input.dispatchEvent(new Event('change', { bubbles: true }));
+  }
+}
+
+function esc(str) {
+  if (!str) return '';
+  var div = document.createElement('div');
+  div.textContent = str;
+  return div.innerHTML;
+}
+
+// ============================================================
+// 数据持久化（IndexedDB，大容量存储，支持大量图片）
+// ============================================================
+var DB_NAME = 'repairSystemDB';
+var DB_VERSION = 1;
+var dbInstance = null;
+
+function openDB() {
+  return new Promise(function(resolve, reject) {
+    if (dbInstance) { resolve(dbInstance); return; }
+    if (!window.indexedDB) { reject(new Error('IndexedDB not supported')); return; }
+    var request = indexedDB.open(DB_NAME, DB_VERSION);
+    request.onupgradeneeded = function(e) {
+      var database = e.target.result;
+      if (!database.objectStoreNames.contains('data')) {
+        database.createObjectStore('data');
+      }
+      if (!database.objectStoreNames.contains('backups')) {
+        database.createObjectStore('backups');
+      }
+    };
+    request.onsuccess = function(e) {
+      dbInstance = e.target.result;
+      resolve(dbInstance);
+    };
+    request.onerror = function(e) { reject(e.target.error); };
+  });
+}
+
+function dbPut(store, key, value) {
+  return openDB().then(function(database) {
+    return new Promise(function(resolve, reject) {
+      var tx = database.transaction(store, 'readwrite');
+      tx.objectStore(store).put(value, key);
+      tx.oncomplete = function() { resolve(); };
+      tx.onerror = function(e) { reject(e.target.error); };
+    });
+  });
+}
+
+function dbGet(store, key) {
+  return openDB().then(function(database) {
+    return new Promise(function(resolve, reject) {
+      var tx = database.transaction(store, 'readonly');
+      var request = tx.objectStore(store).get(key);
+      request.onsuccess = function() { resolve(request.result); };
+      request.onerror = function(e) { reject(e.target.error); };
+    });
+  });
+}
+
+function dbGetAllKeys(store) {
+  return openDB().then(function(database) {
+    return new Promise(function(resolve, reject) {
+      var tx = database.transaction(store, 'readonly');
+      var request = tx.objectStore(store).getAllKeys();
+      request.onsuccess = function() { resolve(request.result); };
+      request.onerror = function(e) { reject(e.target.error); };
+    });
+  });
+}
+
+function dbDelete(store, key) {
+  return openDB().then(function(database) {
+    return new Promise(function(resolve, reject) {
+      var tx = database.transaction(store, 'readwrite');
+      tx.objectStore(store).delete(key);
+      tx.oncomplete = function() { resolve(); };
+      tx.onerror = function(e) { reject(e.target.error); };
+    });
+  });
+}
+
+function serializeForms() {
+  return forms.map(function(f) {
+    return {
+      id: f.id,
+      reporter: f.reporter,
+      location: f.location,
+      reportTime: f.reportTime,
+      phone: f.phone,
+      content: f.content,
+      process: f.process,
+      processImage: f.processImage,
+      repairer: f.repairer,
+      repairTime: f.repairTime,
+      result: f.result,
+      remark: f.remark,
+      status: f.status
+    };
+  });
+}
+
+function saveToLocalStorage() {
+  var data = serializeForms();
+  // 优先使用 IndexedDB（大容量）
+  dbPut('data', STORAGE_KEY, data).then(function() {
+    return true;
+  }).catch(function() {
+    // IndexedDB 不可用时回退到 localStorage
+    try {
+      localStorage.setItem(STORAGE_KEY, JSON.stringify(data));
+    } catch (e) {
+      var msg = '保存失败';
+      if (e.name === 'QuotaExceededError' || e.name === 'NS_ERROR_DOM_QUOTA_REACHED') {
+        msg = '保存失败：存储空间不足，图片可能过大';
+      }
+      showToast(msg);
+    }
+  });
+  return true;
+}
+
+function loadFromLocalStorage() {
+  return dbGet('data', STORAGE_KEY).then(function(data) {
+    if (data && Array.isArray(data) && data.length > 0) {
+      forms = data.map(function(d) {
+        var f = createFormData();
+        f.id = d.id || f.id;
+        f.reporter = d.reporter || '';
+        f.location = d.location || '';
+        f.reportTime = d.reportTime || getNowString();
+        f.phone = d.phone || '';
+        f.content = d.content || '';
+        f.process = d.process || '';
+        f.processImage = d.processImage || '';
+        f.repairer = d.repairer || '林建勋';
+        f.repairTime = d.repairTime || '';
+        f.result = d.result || '';
+        f.remark = d.remark || '';
+        f.status = d.status || '待处理';
+        return f;
+      });
+      return true;
+    }
+    // IndexedDB 无数据，尝试从 localStorage 迁移（旧版本用户）
+    try {
+      var raw = localStorage.getItem(STORAGE_KEY);
+      if (raw) {
+        var oldData = JSON.parse(raw);
+        if (Array.isArray(oldData) && oldData.length > 0) {
+          forms = oldData.map(function(d) {
+            var f = createFormData();
+            f.reporter = d.reporter || '';
+            f.location = d.location || '';
+            f.reportTime = d.reportTime || getNowString();
+            f.phone = d.phone || '';
+            f.content = d.content || '';
+            f.process = d.process || '';
+            f.processImage = d.processImage || '';
+            f.repairer = d.repairer || '林建勋';
+            f.repairTime = d.repairTime || '';
+            f.result = d.result || '';
+            f.remark = d.remark || '';
+            f.status = d.status || '待处理';
+            return f;
+          });
+          // 迁移到 IndexedDB
+          dbPut('data', STORAGE_KEY, serializeForms());
+          return true;
+        }
+      }
+    } catch (e) {}
+    return false;
+  }).catch(function() {
+    // IndexedDB 不可用，尝试 localStorage
+    try {
+      var raw = localStorage.getItem(STORAGE_KEY);
+      if (!raw) return false;
+      var data = JSON.parse(raw);
+      if (!Array.isArray(data) || data.length === 0) return false;
+      forms = data.map(function(d) {
+        var f = createFormData();
+        f.reporter = d.reporter || '';
+        f.location = d.location || '';
+        f.reportTime = d.reportTime || getNowString();
+        f.phone = d.phone || '';
+        f.content = d.content || '';
+        f.process = d.process || '';
+        f.processImage = d.processImage || '';
+        f.repairer = d.repairer || '林建勋';
+        f.repairTime = d.repairTime || '';
+        f.result = d.result || '';
+        f.remark = d.remark || '';
+        f.status = d.status || '待处理';
+        return f;
+      });
+      return true;
+    } catch (e) {
+      return false;
+    }
+  });
+}
+
+function autoSave() {
+  clearTimeout(saveTimer);
+  saveTimer = setTimeout(function() { saveToLocalStorage(); }, 800);
+}
+
+function manualSave() {
+  if (saveToLocalStorage()) {
+    isDirty = false;
+    showToast('已保存 ' + forms.length + ' 张报修单到本地');
+  }
+}
+
+// ============================================================
+// 撤销 / 重做
+// ============================================================
+var historyStack = [];
+var historyIndex = -1;
+var historyTimer = null;
+var isRestoring = false;
+var isDirty = false;
+var MAX_HISTORY = 50;
+
+function snapshotForms() {
+  return forms.map(function(f) {
+    return {
+      id: f.id, reporter: f.reporter, location: f.location,
+      reportTime: f.reportTime, phone: f.phone, content: f.content,
+      process: f.process, processImage: f.processImage,
+      repairer: f.repairer, repairTime: f.repairTime, status: f.status
+    };
+  });
+}
+
+function pushHistory() {
+  if (isRestoring) return;
+  clearTimeout(historyTimer);
+  historyTimer = setTimeout(function() {
+    var snapshot = JSON.parse(JSON.stringify(snapshotForms()));
+    historyStack = historyStack.slice(0, historyIndex + 1);
+    historyStack.push(snapshot);
+    if (historyStack.length > MAX_HISTORY) historyStack.shift();
+    historyIndex = historyStack.length - 1;
+    updateUndoRedoButtons();
+  }, 800);
+}
+
+function restoreFromHistory() {
+  isRestoring = true;
+  var snapshot = historyStack[historyIndex];
+  forms = snapshot.map(function(d) {
+    var f = createFormData();
+    for (var k in d) f[k] = d[k];
+    return f;
+  });
+  renderAll();
+  isRestoring = false;
+  isDirty = true;
+  updateUndoRedoButtons();
+}
+
+function undo() {
+  if (historyIndex <= 0) { showToast('没有可撤销的操作'); return; }
+  historyIndex--;
+  restoreFromHistory();
+  showToast('已撤销');
+}
+
+function redo() {
+  if (historyIndex >= historyStack.length - 1) { showToast('没有可恢复的内容'); return; }
+  historyIndex++;
+  restoreFromHistory();
+  showToast('已恢复');
+}
+
+function updateUndoRedoButtons() {
+  var undoBtn = document.getElementById('undoBtn');
+  var redoBtn = document.getElementById('redoBtn');
+  if (undoBtn) undoBtn.disabled = historyIndex <= 0;
+  if (redoBtn) redoBtn.disabled = historyIndex >= historyStack.length - 1;
+}
+
+// ============================================================
+// 搜索筛选
+// ============================================================
+var searchKeyword = '';
+
+function applySearch() {
+  var input = document.getElementById('searchInput');
+  var clearBtn = document.getElementById('searchClear');
+  searchKeyword = input.value.trim().toLowerCase();
+  clearBtn.style.display = searchKeyword ? 'block' : 'none';
+  renderAll();
+  if (searchKeyword) {
+    var count = getSearchResults().length;
+    showToast('找到 ' + count + ' 张匹配的报修单');
+  }
+}
+
+function clearSearch() {
+  document.getElementById('searchInput').value = '';
+  document.getElementById('searchClear').style.display = 'none';
+  searchKeyword = '';
+  renderAll();
+}
+
+function getSearchResults() {
+  if (!searchKeyword) return forms;
+  return forms.filter(function(f) {
+    var fields = [f.reporter, f.location, f.content, f.process, f.repairer, f.status, f.phone, f.remark];
+    return fields.some(function(v) {
+      return v && v.toLowerCase().indexOf(searchKeyword) !== -1;
+    });
+  });
+}
+
+// ============================================================
+// 滚动位置恢复
+// ============================================================
+var SCROLL_KEY = 'fzu_zc_repair_scroll_pos';
+var scrollSaveTimer = null;
+
+function saveScrollPosition() {
+  clearTimeout(scrollSaveTimer);
+  scrollSaveTimer = setTimeout(function() {
+    try {
+      localStorage.setItem(SCROLL_KEY, window.scrollY || document.documentElement.scrollTop || 0);
+    } catch(e) {}
+  }, 300);
+}
+
+function restoreScrollPosition() {
+  try {
+    var pos = parseInt(localStorage.getItem(SCROLL_KEY) || '0');
+    if (pos > 0) {
+      setTimeout(function() { window.scrollTo(0, pos); }, 100);
+    }
+  } catch(e) {}
+}
+
+// ============================================================
+// 创建空白报修单数据
+// ============================================================
+function createFormData() {
+  return {
+    id: generateId(),
+    reporter: '',
+    location: '',
+    reportTime: getNowString(),
+    phone: '',
+    content: '',
+    process: '',
+    processImage: '',
+    repairer: '林建勋',
+    repairTime: '',
+    result: '',
+    remark: '',
+    status: '待处理'
+  };
+}
+
+// ============================================================
+// 渲染所有表单
+// ============================================================
+function renderAll() {
+  var container = document.getElementById('formContainer');
+  container.innerHTML = '';
+  var displayForms = getSearchResults();
+  displayForms.forEach(function(f, idx) {
+    container.appendChild(renderForm(f, idx));
+  });
+  var countEl = document.getElementById('formCount');
+  if (searchKeyword) {
+    countEl.textContent = '筛选 ' + displayForms.length + ' / 共 ' + forms.length + ' 张';
+  } else {
+    countEl.textContent = '共 ' + forms.length + ' 张报修单';
+  }
+  autoSave();
+}
+
+// ============================================================
+// 渲染单张报修单
+// ============================================================
+function renderForm(data, idx) {
+  var card = document.createElement('div');
+  card.className = 'repair-card';
+  card.id = 'card_' + data.id;
+  card.setAttribute('data-form-id', data.id);
+
+  card.innerHTML =
+    '<div class="card-header">' +
+      '<span class="card-index">报修单 #' + (idx + 1) + '</span>' +
+      '<div class="card-actions">' +
+        '<button class="btn-sm btn-paste" onclick="openPasteModal(\'' + data.id + '\')">智能粘贴</button>' +
+        '<button class="btn-sm btn-delete" onclick="deleteForm(\'' + data.id + '\')">删除</button>' +
+      '</div>' +
+    '</div>' +
+    '<div class="repair-form">' +
+      '<div class="form-title">多媒体教室设备报修单</div>' +
+      '<table class="repair-table">' +
+        '<tr>' +
+          '<td class="label-cell">报修时间</td>' +
+          '<td class="input-cell"><input type="datetime-local" data-field="reportTime" value="' + data.reportTime + '"> <button type="button" class="now-btn" data-field="reportTime" onclick="fillNow(this)">现在</button></td>' +
+          '<td class="label-cell">联系电话</td>' +
+          '<td class="input-cell"><input type="tel" data-field="phone" value="' + esc(data.phone) + '" placeholder="选填"></td>' +
+        '</tr>' +
+        '<tr>' +
+          '<td class="label-cell">报修人</td>' +
+          '<td class="input-cell"><input type="text" data-field="reporter" value="' + esc(data.reporter) + '" list="reporterOptions" placeholder="选择或输入姓名"></td>' +
+          '<td class="label-cell">地点</td>' +
+          '<td class="input-cell"><input type="text" data-field="location" value="' + esc(data.location) + '" placeholder="如：东教304"></td>' +
+        '</tr>' +
+        '<tr class="content-row">' +
+          '<td class="label-cell">报修内容</td>' +
+          '<td colspan="3" class="input-cell">' +
+            '<textarea data-field="content" rows="3" placeholder="请填写报修内容，如：东教304电脑不开机，开机指示灯不亮…">' + esc(data.content) + '</textarea>' +
+          '</td>' +
+        '</tr>' +
+        '<tr>' +
+          '<td class="label-cell">维修人员</td>' +
+          '<td class="input-cell"><input type="text" data-field="repairer" value="' + esc(data.repairer) + '" list="repairerOptions" placeholder="选择或输入姓名"></td>' +
+          '<td class="label-cell">维修时间</td>' +
+          '<td class="input-cell"><input type="datetime-local" data-field="repairTime" value="' + data.repairTime + '" placeholder="处理完成时间"> <button type="button" class="now-btn" data-field="repairTime" onclick="fillNow(this)">现在</button></td>' +
+        '</tr>' +
+        '<tr class="process-row">' +
+          '<td class="label-cell">故障处理记录</td>' +
+          '<td colspan="3" class="input-cell process-cell">' +
+            '<textarea data-field="process" rows="3" placeholder="请填写故障处理记录，如：已恢复 / 已更换电池…">' + esc(data.process) + '</textarea>' +
+            '<div class="process-image-wrap">' +
+              (data.processImage
+                ? '<img src="' + data.processImage + '" alt="处理图片">' +
+                  '<div class="img-actions">' +
+                    '<button onclick="triggerImageUpload(\'' + data.id + '\')">更换图片</button>' +
+                    '<button onclick="removeImage(\'' + data.id + '\')">移除图片</button>' +
+                  '</div>'
+                : '<div class="img-placeholder" onclick="triggerImageUpload(\'' + data.id + '\')">点击/拖拽上传图片</div>'
+              ) +
+              '<input type="file" id="file_' + data.id + '" accept="image/*" style="display:none" onchange="handleImageUpload(event, \'' + data.id + '\')">' +
+            '</div>' +
+          '</td>' +
+        '</tr>' +
+        '<tr class="result-row">' +
+          '<td class="label-cell">处理状态</td>' +
+          '<td colspan="3" class="input-cell">' +
+            '<select class="status-select" data-field="status">' +
+              '<option value="待处理"' + (data.status === '待处理' ? ' selected' : '') + '>待处理</option>' +
+              '<option value="处理中"' + (data.status === '处理中' ? ' selected' : '') + '>处理中</option>' +
+              '<option value="完成"' + (data.status === '完成' ? ' selected' : '') + '>完成</option>' +
+            '</select>' +
+          '</td>' +
+        '</tr>' +
+        '<tr class="remark-row">' +
+          '<td class="label-cell">备注</td>' +
+          '<td colspan="3" class="input-cell">' +
+            '<textarea data-field="remark" rows="2" placeholder="选填">' + esc(data.remark) + '</textarea>' +
+          '</td>' +
+        '</tr>' +
+      '</table>' +
+    '</div>';
+
+  // 绑定输入事件
+  var inputs = card.querySelectorAll('input, textarea, select');
+  inputs.forEach(function(el) {
+    el.addEventListener('input', function() {
+      var field = el.getAttribute('data-field');
+      data[field] = el.value;
+      isDirty = true;
+      autoSave();
+      pushHistory();
+      if (field === 'status' && el.value === '完成') {
+        var isLast = forms[forms.length - 1].id === data.id;
+        if (isLast) {
+          setTimeout(function() {
+            addForm();
+            showToast('已自动生成新的空白报修单');
+          }, 300);
+        }
+      }
+    });
+    el.addEventListener('change', function() {
+      var field = el.getAttribute('data-field');
+      data[field] = el.value;
+      isDirty = true;
+      autoSave();
+      pushHistory();
+    });
+  });
+
+  // ---- 拖拽上传图片 ----
+  var dropZone = card.querySelector('.process-image-wrap');
+  if (dropZone) {
+    dropZone.addEventListener('dragover', function(e) {
+      e.preventDefault();
+      e.stopPropagation();
+      dropZone.classList.add('drag-over');
+    });
+    dropZone.addEventListener('dragleave', function(e) {
+      e.preventDefault();
+      e.stopPropagation();
+      dropZone.classList.remove('drag-over');
+    });
+    dropZone.addEventListener('drop', function(e) {
+      e.preventDefault();
+      e.stopPropagation();
+      dropZone.classList.remove('drag-over');
+      if (e.dataTransfer.files && e.dataTransfer.files.length > 0) {
+        handleImageFile(e.dataTransfer.files[0], data.id);
+      }
+    });
+  }
+
+  // ---- 粘贴图片上传（在处理过程文本框中 Ctrl+V） ----
+  var processTextarea = card.querySelector('textarea[data-field="process"]');
+  if (processTextarea) {
+    processTextarea.addEventListener('paste', function(e) {
+      var items = e.clipboardData && e.clipboardData.items;
+      if (!items) return;
+      for (var i = 0; i < items.length; i++) {
+        if (items[i].type.indexOf('image') !== -1) {
+          e.preventDefault();
+          var file = items[i].getAsFile();
+          if (file) handleImageFile(file, data.id);
+          break;
+        }
+      }
+    });
+  }
+
+  return card;
+}
+
+// ============================================================
+// 新增 / 删除 / 清空
+// ============================================================
+function addForm() {
+  forms.push(createFormData());
+  isDirty = true;
+  renderAll();
+  pushHistory();
+  setTimeout(function() {
+    var last = document.querySelector('.repair-card:last-child');
+    if (last) last.scrollIntoView({ behavior: 'smooth', block: 'start' });
+  }, 50);
+}
+
+function deleteForm(id) {
+  if (forms.length <= 1) {
+    showToast('至少保留一张报修单');
+    return;
+  }
+  if (!confirm('确定删除这张报修单吗？')) return;
+  forms = forms.filter(function(f) { return f.id !== id; });
+  isDirty = true;
+  renderAll();
+  pushHistory();
+  showToast('已删除');
+}
+
+function clearAll() {
+  if (!confirm('确定清空全部报修单吗？此操作不可恢复。')) return;
+  forms = [createFormData()];
+  // 清除 IndexedDB 和 localStorage 中的数据
+  try { dbDelete('data', STORAGE_KEY); } catch (e) {}
+  try { localStorage.removeItem(STORAGE_KEY); } catch (e) {}
+  isDirty = true;
+  renderAll();
+  pushHistory();
+  showToast('已清空');
+}
+
+// ============================================================
+// 图片上传（点击 / 拖拽 / 粘贴）
+// ============================================================
+function triggerImageUpload(formId) {
+  document.getElementById('file_' + formId).click();
+}
+
+function handleImageUpload(event, formId) {
+  var file = event.target.files[0];
+  if (file) handleImageFile(file, formId);
+}
+
+// 图片压缩：上传前自动压缩，减少存储空间
+function compressImage(file, callback) {
+  var reader = new FileReader();
+  reader.onload = function(e) {
+    var img = new Image();
+    img.onload = function() {
+      var maxWidth = 1280;
+      var quality = 0.7;
+      var width = img.width;
+      var height = img.height;
+      if (width > maxWidth) {
+        height = Math.round((maxWidth / width) * height);
+        width = maxWidth;
+      }
+      var canvas = document.createElement('canvas');
+      canvas.width = width;
+      canvas.height = height;
+      var ctx = canvas.getContext('2d');
+      ctx.drawImage(img, 0, 0, width, height);
+      var compressed = canvas.toDataURL('image/jpeg', quality);
+      callback(compressed);
+    };
+    img.onerror = function() {
+      // 压缩失败，使用原图
+      callback(e.target.result);
+    };
+    img.src = e.target.result;
+  };
+  reader.readAsDataURL(file);
+}
+
+// 通用图片处理函数（点击、拖拽、粘贴共用）
+function handleImageFile(file, formId) {
+  if (!file || !file.type.startsWith('image/')) {
+    showToast('请选择图片文件');
+    return;
+  }
+  if (file.size > 10 * 1024 * 1024) {
+    showToast('图片不能超过 10MB（将自动压缩）');
+    return;
+  }
+  showToast('正在压缩图片...');
+  compressImage(file, function(compressedData) {
+    var form = forms.find(function(f) { return f.id === formId; });
+    if (form) {
+      form.processImage = compressedData;
+      isDirty = true;
+      renderAll();
+      autoSave();
+      pushHistory();
+      showToast('图片已上传并压缩');
+    }
+  });
+}
+
+function removeImage(formId) {
+  var form = forms.find(function(f) { return f.id === formId; });
+  if (form) {
+    form.processImage = '';
+    isDirty = true;
+    renderAll();
+    autoSave();
+    pushHistory();
+  }
+}
+
+// ============================================================
+// 格式化 datetime-local 值
+// ============================================================
+function formatDT(val) {
+  if (!val) return '';
+  return val.replace('T', ' ');
+}
+
+// Word导出版本：2026-8-27 7:53（无前导零，匹配参考模板）
+function formatDTWord(val) {
+  if (!val) return '';
+  var m = val.match(/(\d{4})-(\d{1,2})-(\d{1,2})T(\d{1,2}):(\d{2})/);
+  if (!m) return val.replace('T', ' ');
+  return parseInt(m[1]) + '-' + parseInt(m[2]) + '-' + parseInt(m[3]) + ' ' + parseInt(m[4]) + ':' + m[5];
+}
+
+// ============================================================
+// 智能粘贴：解析引擎
+// ============================================================
+function parseRepairText(rawText) {
+  var text = rawText.replace(/\r/g, '').trim();
+  var result = {
+    reporter: '',
+    location: '',
+    reportTime: '',
+    phone: '',
+    content: '',
+    repairer: '',
+    repairTime: '',
+    result: '',
+    remark: '',
+    status: '',
+    _raw: text
+  };
+
+  if (!text) return result;
+
+  // 工作副本，提取后从文本中移除，剩余归入报修内容
+  var work = text;
+
+  // ---- 1. 提取电话（11位手机 或 带区号座机） ----
+  var phoneRe = /(?:我的?\s*)?(?:联系电话|电话|联系方式|手机)\s*[：:]?\s*(1[3-9]\d{9}|0\d{2,3}-?\d{7,8})/;
+  var m = work.match(phoneRe);
+  if (m) {
+    result.phone = m[1];
+    work = work.replace(m[0], ' ');
+  } else {
+    // 无标签的手机号
+    var barePhone = work.match(/1[3-9]\d{9}/);
+    if (barePhone) {
+      result.phone = barePhone[0];
+      work = work.replace(barePhone[0], ' ');
+    }
+  }
+
+  // ---- 2. 提取带标签字段 ----
+  var labelPatterns = [
+    { field: 'reporter',  re: /(?:报修人|报障人|申请人|联系人|姓名)\s*[：:]\s*([^\s,，;；\n\r\t]+)/ },
+    { field: 'location',  re: /(?:地点|位置|教室|楼栋|地址|房间)\s*[：:]\s*([^\s,，;；\n\r\t]+)/ },
+    { field: 'repairer',  re: /(?:维修人员|维修人|处理人|维修师傅|工程师)\s*[：:]\s*([^\s,，;；\n\r\t]+)/ },
+    { field: 'result',    re: /(?:维修结果|处理结果|修复结果)\s*[：:]\s*([^\n\r]+)/ },
+    { field: 'remark',    re: /(?:备注|说明|附注)\s*[：:]\s*([^\n\r]+)/ },
+    { field: 'status',    re: /(?:处理状态|状态|进度)\s*[：:]\s*(完成|已完成|处理中|待处理|未处理|维修中)/ }
+  ];
+  labelPatterns.forEach(function(p) {
+    var mm = work.match(p.re);
+    if (mm && !result[p.field]) {
+      result[p.field] = mm[1].trim();
+      work = work.replace(mm[0], ' ');
+    }
+  });
+  // 状态归一化
+  if (result.status === '已完成') result.status = '完成';
+  if (result.status === '未处理' || result.status === '维修中') result.status = '处理中';
+
+  // 2b. 隐含状态识别：已修好/已恢复/搞定了/已解决/已修复 -> 完成
+  if (!result.status) {
+    if (/(?:已修好|已修复|已恢复|已解决|搞定了|弄好了|修好了|处理完毕|已完毕)/.test(work)) {
+      result.status = '完成';
+    } else if (/(?:正在修|维修中|修理中|处理中|正在处理)/.test(work)) {
+      result.status = '处理中';
+    }
+  }
+
+  // 2c. 隐含维修时间：今天修好的/昨天完成的/已于27日修复
+  if (!result.repairTime) {
+    var implRepairRe = /(?:今天|昨天|明天|前天)?\s*(?:已)?(?:修好|修复|恢复|解决|完成|处理完毕)[的了]?/;
+    m = work.match(implRepairRe);
+    if (m) {
+      var dayWord = m[1] || '今天';
+      result.repairTime = normalizeRelativeTime(dayWord, '');
+      // 不删除整个匹配，只删除时间词，保留状态描述
+    }
+  }
+
+  // ---- 3. 提取时间 ----
+  // 3a. 带标签的报修时间
+  var timeLabelRe = /(?:报修时间|报障时间|时间|上报时间|申请时间)\s*[：:]\s*([0-9]{4}[-年\/][0-9]{1,2}[-月\/][0-9]{1,2}[日号]?\s*[0-9]{0,2}[:：时]?[0-9]{0,2}[分]?)/;
+  m = work.match(timeLabelRe);
+  if (m) {
+    result.reportTime = normalizeDateTime(m[1]);
+    work = work.replace(m[0], ' ');
+  }
+  // 3b. 带标签的维修/完成时间
+  var repairTimeRe = /(?:维修时间|完成时间|处理时间|修复时间)\s*[：:]\s*([0-9]{4}[-年\/][0-9]{1,2}[-月\/][0-9]{1,2}[日号]?\s*[0-9]{0,2}[:：时]?[0-9]{0,2}[分]?)/;
+  m = work.match(repairTimeRe);
+  if (m) {
+    result.repairTime = normalizeDateTime(m[1]);
+    work = work.replace(m[0], ' ');
+  }
+  // 3c. 无标签的日期时间（取第一个）
+  if (!result.reportTime) {
+    var bareDT = work.match(/([0-9]{4}[-年\/][0-9]{1,2}[-月\/][0-9]{1,2}[日号]?\s*[0-9]{1,2}[:：][0-9]{2})/);
+    if (bareDT) {
+      result.reportTime = normalizeDateTime(bareDT[1]);
+      work = work.replace(bareDT[0], ' ');
+    }
+  }
+  // 3c2. 无年份日期时间：8月27日 7:53 / 8-27 7:53 / 8/27 7:53
+  if (!result.reportTime) {
+    var noYearDT = work.match(/([0-9]{1,2}[-月\/][0-9]{1,2}[日号]?\s*[0-9]{1,2}[:：][0-9]{2})/);
+    if (noYearDT) {
+      result.reportTime = normalizeDateNoYear(noYearDT[1]);
+      work = work.replace(noYearDT[0], ' ');
+    }
+  }
+  // 3c3. 无年份无时间：8月27日 / 8-27 / 8/27
+  if (!result.reportTime) {
+    var noYearD = work.match(/([0-9]{1,2}[-月\/][0-9]{1,2}[日号]?)/);
+    if (noYearD) {
+      result.reportTime = normalizeDateNoYear(noYearD[1]);
+      work = work.replace(noYearD[0], ' ');
+    }
+  }
+  // 3d. 相对时间：今天/明天/昨天 + 时间
+  if (!result.reportTime) {
+    var relRe = /(今天|明天|昨天|今早|今晨|上午|下午|晚上)\s*([0-9]{1,2}[:：点]?[0-9]{0,2}[分]?)/;
+    m = work.match(relRe);
+    if (m) {
+      result.reportTime = normalizeRelativeTime(m[1], m[2]);
+      work = work.replace(m[0], ' ');
+    }
+  }
+  // 3e. 点号分隔日期：2026.8.27 / 8.27
+  if (!result.reportTime) {
+    var dotDT = work.match(/([0-9]{0,4}\.?[0-9]{1,2}\.[0-9]{1,2}[日号]?\s*[0-9]{0,2}[:：点]?[0-9]{0,2}[分]?)/);
+    if (dotDT && dotDT[1].match(/\d+\.\d+/)) {
+      result.reportTime = normalizeDotDate(dotDT[1]);
+      if (result.reportTime) work = work.replace(dotDT[0], ' ');
+    }
+  }
+  // 3f. 仅日期：27号 / 27日 / 27日下午3点
+  if (!result.reportTime) {
+    var dayRe = /([0-9]{1,2})[号日](?:\s*(上午|下午|晚上|中午|早上)?\s*([0-9]{1,2}[:：点]?[0-9]{0,2}[分]?)?)/;
+    m = work.match(dayRe);
+    if (m) {
+      result.reportTime = normalizeDayOnly(parseInt(m[1]), m[2] || '', m[3] || '');
+      work = work.replace(m[0], ' ');
+    }
+  }
+  // 3g. 纯时间：下午3点 / 上午10点半 / 今晚8点（日期用今天）
+  if (!result.reportTime) {
+    var timeOnlyRe = /(今天|今晚|今早|今天上午|今天下午|今天晚上|上午|下午|晚上|中午|早上)\s*([0-9]{1,2})[点时:：]([0-9]{0,2})[分]?/;
+    m = work.match(timeOnlyRe);
+    if (m) {
+      result.reportTime = normalizeTimeOnly(m[1], parseInt(m[2]), m[3] ? parseInt(m[3]) : 0);
+      work = work.replace(m[0], ' ');
+    }
+  }
+
+  // ---- 4. 无标签地点提取：常见教室/楼栋命名 ----
+  if (!result.location) {
+    // 东教304 / 西教A201 / 教学楼B305 / 实验楼201 / A栋304 / 3号楼201 / 201室 / 304教室
+    var locRe = /((?:东教|西教|南教|北教|中教|教学楼|实验楼|科技楼|行政楼|图书馆|体育馆|实训楼|文科楼|理科楼|综合楼|艺术楼|音乐楼|美术楼|机房|语音室|多媒体教室|阶梯教室|会议室|办公楼|食堂|宿舍)[A-Za-z]?\s*\d{0,4}[A-Za-z]?(?:室|教室|房间)?)/;
+    m = work.match(locRe);
+    if (m) {
+      result.location = m[1].replace(/\s+/g, '');
+      work = work.replace(m[0], ' ');
+    }
+  }
+  // 备用：X栋XXX / X号楼XXX 格式
+  if (!result.location) {
+    var locRe2 = /([A-Za-z0-9一二三四五六七八九十]+(?:栋|号楼)\s*\d{2,4}[A-Za-z]?(?:室|教室)?)/;
+    m = work.match(locRe2);
+    if (m) {
+      result.location = m[1].replace(/\s+/g, '');
+      work = work.replace(m[0], ' ');
+    }
+  }
+  // 备用：纯房间号 XXX室 / XXX教室
+  if (!result.location) {
+    var locRe3 = /(\d{2,4}[A-Za-z]?\s*(?:室|教室|房间))/;
+    m = work.match(locRe3);
+    if (m) {
+      result.location = m[1].replace(/\s+/g, '');
+      work = work.replace(m[0], ' ');
+    }
+  }
+  // 备用：X楼XXX / X楼XXX室 / 三楼304
+  if (!result.location) {
+    var locRe4 = /([0-9一二三四五六七八九十]+楼\s*\d{2,4}[A-Za-z]?(?:室|教室)?)/;
+    m = work.match(locRe4);
+    if (m) {
+      result.location = m[1].replace(/\s+/g, '');
+      work = work.replace(m[0], ' ');
+    }
+  }
+  // 备用：东区/西区XXX
+  if (!result.location) {
+    var locRe5 = /((?:东区|西区|南区|北区|新区|旧区)\s*\d{2,4}[A-Za-z]?)/;
+    m = work.match(locRe5);
+    if (m) {
+      result.location = m[1].replace(/\s+/g, '');
+      work = work.replace(m[0], ' ');
+    }
+  }
+
+  // ---- 5. 无标签报修人提取 ----
+  if (!result.reporter) {
+    // "由xxx报修" / "xxx报修" / "我是xxx"
+    var repRe = /([\u4e00-\u9fa5]{2,4})\s*(?:报修|报障|申请)/;
+    m = work.match(repRe);
+    if (m) {
+      result.reporter = m[1];
+      work = work.replace(m[0], ' ');
+    }
+  }
+  if (!result.reporter) {
+    var imRe = /我是([\u4e00-\u9fa5]{2,4})/;
+    m = work.match(imRe);
+    if (m) {
+      result.reporter = m[1];
+      work = work.replace(m[0], ' ');
+    }
+  }
+  if (!result.reporter) {
+    // 由xxx上报 / xxx反馈 / xxx反映
+    var repRe2 = /(?:由|通过)?([\u4e00-\u9fa5]{2,4})\s*(?:上报|反馈|反映|提交)/;
+    m = work.match(repRe2);
+    if (m) {
+      result.reporter = m[1];
+      work = work.replace(m[0], ' ');
+    }
+  }
+
+  // ---- 6. 提取报修内容（带标签） ----
+  var contentRe = /(?:报修内容|报障内容|故障描述|问题描述|故障现象|问题)\s*[：:]\s*([\s\S]*?)(?=\n\s*(?:维修人员|故障处理记录|处理过程|维修结果|备注|处理状态|维修时间|$))/;
+  m = work.match(contentRe);
+  if (m) {
+    result.content = m[1].trim();
+    work = work.replace(m[0], ' ');
+  }
+
+  // ---- 7. 提取故障处理记录（带标签） ----
+  var processRe = /(?:故障处理记录|处理过程|维修过程|处理说明)\s*[：:]\s*([\s\S]*?)(?=\n\s*(?:维修人员|维修结果|备注|处理状态|维修时间|$))/;
+  m = work.match(processRe);
+  if (m) {
+    result.process = m[1].trim();
+    work = work.replace(m[0], ' ');
+  }
+
+  // ---- 7b. 提取维修结果（带标签） ----
+  var resultRe = /(?:维修结果|处理结果|修复结果)\s*[：:]\s*([\s\S]*?)(?=\n\s*(?:备注|处理状态|$))/;
+  m = work.match(resultRe);
+  if (m) {
+    result.result = m[1].trim();
+    work = work.replace(m[0], ' ');
+  }
+
+  // ---- 7c. 提取备注（带标签） ----
+  var remarkRe = /(?:备注|说明|附注)\s*[：:]\s*([\s\S]*?)(?=\n\s*(?:处理状态|$))/;
+  m = work.match(remarkRe);
+  if (m) {
+    result.remark = m[1].trim();
+    work = work.replace(m[0], ' ');
+  }
+
+  // ---- 8. 剩余文本归入报修内容（如果还没有） ----
+  work = cleanLeftover(work);
+  if (!result.content && work) {
+    result.content = work;
+  } else if (result.content && work) {
+    var leftover = work;
+    if (leftover && result.content.indexOf(leftover) === -1 && leftover.length > 2) {
+      result.content = result.content + '\n' + leftover;
+    }
+  }
+  // 最终清理内容中的残留标签
+  if (result.content) {
+    result.content = result.content
+      .replace(/(?:联系电话|电话|联系方式|手机)\s*[：:]?\s*$/g, '')
+      .replace(/(?:报修人|报障人|申请人|联系人|姓名)\s*[：:]?\s*$/g, '')
+      .replace(/(?:地点|位置|教室|楼栋|地址)\s*[：:]?\s*$/g, '')
+      .replace(/[，。、；：,\.;:]\s*$/g, '')
+      .replace(/^[，。、；：,\.;:]\s*/g, '')
+      .replace(/\n{3,}/g, '\n\n')
+      .trim();
+  }
+
+  return result;
+}
+
+// 清理提取字段后的残留文本
+function cleanLeftover(text) {
+  var t = text
+    .replace(/[ \t]+/g, ' ')
+    .replace(/\n{3,}/g, '\n\n')
+    // 去除残留的标签词
+    .replace(/(?:联系电话|电话|联系方式|手机)\s*[：:]?\s*/g, '')
+    .replace(/(?:报修人|报障人|申请人|联系人|姓名)\s*[：:]?\s*/g, '')
+    .replace(/(?:地点|位置|教室|楼栋|地址|房间)\s*[：:]?\s*/g, '')
+    .replace(/(?:维修人员|维修人|处理人|维修师傅|工程师)\s*[：:]?\s*/g, '')
+    .replace(/(?:处理状态|状态|进度)\s*[：:]?\s*/g, '')
+    .replace(/(?:报修时间|报障时间|时间|上报时间|申请时间)\s*[：:]?\s*/g, '')
+    .replace(/(?:维修时间|完成时间|处理时间|修复时间)\s*[：:]?\s*/g, '')
+    .replace(/(?:报修内容|报障内容|故障描述|问题描述|故障现象|问题)\s*[：:]?\s*/g, '')
+    .replace(/(?:故障处理记录|处理过程|维修过程|处理说明)\s*[：:]?\s*/g, '')
+    .replace(/(?:维修结果|处理结果|修复结果)\s*[：:]?\s*/g, '')
+    .replace(/(?:备注|说明|附注)\s*[：:]?\s*/g, '')
+    // 去除残留的人称代词
+    .replace(/我[的是]?\s*$/g, '')
+    // 压缩重复标点
+    .replace(/[，,]{2,}/g, '，')
+    .replace(/[。.]{2,}/g, '。')
+    .replace(/[、]{2,}/g, '、')
+    .replace(/\s*，\s*/g, '，')
+    // 去除行首行尾标点
+    .replace(/^[，。、；：,\.;:\s]+/g, '')
+    .replace(/[，。、；：,\.;:\s]+$/g, '')
+    .trim();
+  return t;
+}
+
+// 将各种日期时间格式统一为 datetime-local 格式 (YYYY-MM-DDTHH:mm)
+function normalizeDateTime(str) {
+  if (!str) return '';
+  str = str.trim();
+  // 提取年月日
+  var y = str.match(/([0-9]{4})/);
+  var md = str.match(/[0-9]{4}[-年\/]([0-9]{1,2})[-月\/]([0-9]{1,2})/);
+  if (!md) return '';
+  var year = y[1];
+  var month = md[1];
+  var day = md[2];
+  // 提取时分
+  var hm = str.match(/([0-9]{1,2})[:：时]([0-9]{2})/);
+  var hour = hm ? hm[1] : '00';
+  var minute = hm ? hm[2] : '00';
+  var pad = function(n) { return (n < 10 ? '0' : '') + n; };
+  return year + '-' + pad(parseInt(month)) + '-' + pad(parseInt(day)) + 'T' + pad(parseInt(hour)) + ':' + pad(parseInt(minute));
+}
+
+// 无年份日期时间转换（默认当前年份）：8月27日 7:53 / 8-27 / 8/27
+function normalizeDateNoYear(str) {
+  if (!str) return '';
+  str = str.trim();
+  var md = str.match(/([0-9]{1,2})[-月\/]([0-9]{1,2})/);
+  if (!md) return '';
+  var year = new Date().getFullYear();
+  var month = parseInt(md[1]);
+  var day = parseInt(md[2]);
+  var hm = str.match(/([0-9]{1,2})[:：]([0-9]{2})/);
+  var hour = hm ? parseInt(hm[1]) : 9;
+  var minute = hm ? parseInt(hm[2]) : 0;
+  var pad = function(n) { return (n < 10 ? '0' : '') + n; };
+  return year + '-' + pad(month) + '-' + pad(day) + 'T' + pad(hour) + ':' + pad(minute);
+}
+
+// 点号分隔日期：2026.8.27 / 8.27
+function normalizeDotDate(str) {
+  if (!str) return '';
+  str = str.trim();
+  // 尝试双点：2026.8.27
+  var parts = str.match(/([0-9]{4})\.([0-9]{1,2})\.([0-9]{1,2})/);
+  var year, month, day;
+  if (parts) {
+    year = parseInt(parts[1]);
+    month = parseInt(parts[2]);
+    day = parseInt(parts[3]);
+  } else {
+    // 单点：8.27
+    var parts2 = str.match(/([0-9]{1,2})\.([0-9]{1,2})/);
+    if (!parts2) return '';
+    year = new Date().getFullYear();
+    month = parseInt(parts2[1]);
+    day = parseInt(parts2[2]);
+  }
+  if (month < 1 || month > 12 || day < 1 || day > 31) return '';
+  var hm = str.match(/([0-9]{1,2})[:：点]([0-9]{0,2})/);
+  var hour = hm ? parseInt(hm[1]) : 9;
+  var minute = (hm && hm[2]) ? parseInt(hm[2]) : 0;
+  var pad = function(n) { return (n < 10 ? '0' : '') + n; };
+  return year + '-' + pad(month) + '-' + pad(day) + 'T' + pad(hour) + ':' + pad(minute);
+}
+
+// 仅日期：27号 + 可选时段 + 可选时间
+function normalizeDayOnly(day, period, timeStr) {
+  var d = new Date();
+  d.setDate(day);
+  var hour = 9, minute = 0;
+  if (timeStr) {
+    var hm = timeStr.match(/([0-9]{1,2})[:：点]?([0-9]{0,2})/);
+    if (hm) {
+      hour = parseInt(hm[1]);
+      minute = hm[2] ? parseInt(hm[2]) : 0;
+    }
+  }
+  if (period === '下午' || period === '晚上' || period === '中午') { if (hour < 12) hour += 12; }
+  if (period === '中午' && hour === 12) hour = 12;
+  var pad = function(n) { return (n < 10 ? '0' : '') + n; };
+  return d.getFullYear() + '-' + pad(d.getMonth()+1) + '-' + pad(d.getDate()) + 'T' + pad(hour) + ':' + pad(minute);
+}
+
+// 纯时间：下午3点（日期用今天）
+function normalizeTimeOnly(period, hour, minute) {
+  var d = new Date();
+  if (period === '下午' || period === '晚上' || period === '今天下午' || period === '今天晚上' || period === '今晚') {
+    if (hour < 12) hour += 12;
+  }
+  if (period === '中午' && hour < 12) hour = 12;
+  var pad = function(n) { return (n < 10 ? '0' : '') + n; };
+  return d.getFullYear() + '-' + pad(d.getMonth()+1) + '-' + pad(d.getDate()) + 'T' + pad(hour) + ':' + pad(minute);
+}
+
+// 相对时间转换
+function normalizeRelativeTime(dayWord, timeStr) {
+  var d = new Date();
+  if (dayWord === '明天') d.setDate(d.getDate() + 1);
+  if (dayWord === '昨天') d.setDate(d.getDate() - 1);
+  var hm = timeStr.match(/([0-9]{1,2})[:：点]?([0-9]{2})?/);
+  var hour = hm ? parseInt(hm[1]) : 9;
+  var minute = (hm && hm[2]) ? parseInt(hm[2]) : 0;
+  if (dayWord === '下午' || dayWord === '晚上') { if (hour < 12) hour += 12; }
+  if (dayWord === '上午' || dayWord === '今早' || dayWord === '今晨') { if (hour >= 12) hour -= 12; }
+  var pad = function(n) { return (n < 10 ? '0' : '') + n; };
+  return d.getFullYear() + '-' + pad(d.getMonth()+1) + '-' + pad(d.getDate()) + 'T' + pad(hour) + ':' + pad(minute);
+}
+
+// ============================================================
+// 智能粘贴：模态框控制
+// ============================================================
+function openPasteModal(targetFormId) {
+  pasteTargetFormId = targetFormId || null;
+  currentParsed = null;
+  document.getElementById('pasteInput').value = '';
+  document.getElementById('parseResult').classList.remove('show');
+  document.getElementById('overwriteCheck').checked = false;
+  var fillBtn = document.getElementById('fillBtn');
+  fillBtn.disabled = true;
+  fillBtn.style.opacity = '0.5';
+  fillBtn.style.cursor = 'not-allowed';
+
+  // 渲染当前表单已有内容
+  renderCurrentFields(targetFormId);
+
+  document.getElementById('pasteModal').classList.add('show');
+  setTimeout(function() { document.getElementById('pasteInput').focus(); }, 100);
+}
+
+// 渲染当前表单已有字段（增量填入参考）
+function renderCurrentFields(targetFormId) {
+  var grid = document.getElementById('currentFieldsGrid');
+  var targetForm = null;
+  if (targetFormId) {
+    targetForm = forms.find(function(f) { return f.id === targetFormId; });
+  }
+  if (!targetForm) {
+    targetForm = forms[forms.length - 1];
+  }
+  if (!targetForm) {
+    grid.innerHTML = '<span class="cf-empty">（新建空白单）</span>';
+    return;
+  }
+  var fields = [
+    { label: '报修人', value: targetForm.reporter },
+    { label: '地点', value: targetForm.location },
+    { label: '报修时间', value: formatDT(targetForm.reportTime) },
+    { label: '电话', value: targetForm.phone },
+    { label: '维修人员', value: targetForm.repairer },
+    { label: '维修时间', value: formatDT(targetForm.repairTime) },
+    { label: '处理状态', value: targetForm.status },
+    { label: '报修内容', value: targetForm.content, full: true },
+    { label: '故障处理记录', value: targetForm.process, full: true },
+    { label: '备注', value: targetForm.remark, full: true }
+  ];
+  var hasAny = fields.some(function(f) { return f.value; });
+  if (!hasAny) {
+    grid.innerHTML = '<span class="cf-empty">（当前为空白单）</span>';
+    return;
+  }
+  var html = '';
+  fields.forEach(function(f) {
+    if (!f.value) return;
+    var fullCls = f.full ? ' style="grid-column:1/-1;"' : '';
+    html += '<div class="cf-item"' + fullCls + '>' +
+              '<span class="cf-label">' + f.label + '</span>' +
+              '<span class="cf-value">' + esc(f.value) + '</span>' +
+            '</div>';
+  });
+  grid.innerHTML = html;
+}
+
+function closePasteModal() {
+  document.getElementById('pasteModal').classList.remove('show');
+  pasteTargetFormId = null;
+  currentParsed = null;
+}
+
+function doParse() {
+  var text = document.getElementById('pasteInput').value;
+  if (!text.trim()) {
+    showToast('请先粘贴报修信息');
+    return;
+  }
+  currentParsed = parseRepairText(text);
+  renderParsePreview(currentParsed);
+  var fillBtn = document.getElementById('fillBtn');
+  fillBtn.disabled = false;
+  fillBtn.style.opacity = '1';
+  fillBtn.style.cursor = 'pointer';
+}
+
+function renderParsePreview(p) {
+  var grid = document.getElementById('parseGrid');
+  var fields = [
+    { label: '报修人', value: p.reporter },
+    { label: '地点', value: p.location },
+    { label: '报修时间', value: formatDT(p.reportTime) || p.reportTime },
+    { label: '电话', value: p.phone },
+    { label: '维修人员', value: p.repairer },
+    { label: '维修时间', value: formatDT(p.repairTime) || p.repairTime },
+    { label: '处理状态', value: p.status },
+    { label: '报修内容', value: p.content, full: true },
+    { label: '故障处理记录', value: p.process, full: true },
+    { label: '备注', value: p.remark, full: true }
+  ];
+  var html = '';
+  fields.forEach(function(f) {
+    var val = f.value || '（未识别）';
+    var cls = f.value ? '' : 'empty';
+    var fullCls = f.full ? ' full' : '';
+    html += '<div class="parse-item' + fullCls + '">' +
+              '<span class="parse-label">' + f.label + '</span>' +
+              '<span class="parse-value ' + cls + '">' + esc(val) + '</span>' +
+            '</div>';
+  });
+  grid.innerHTML = html;
+  document.getElementById('parseResult').classList.add('show');
+}
+
+function doFill() {
+  if (!currentParsed) {
+    showToast('请先点击"识别预览"');
+    return;
+  }
+  var p = currentParsed;
+  var targetForm;
+
+  if (pasteTargetFormId) {
+    // 填入指定表单
+    targetForm = forms.find(function(f) { return f.id === pasteTargetFormId; });
+  }
+  if (!targetForm) {
+    // 检查最后一张是否空白，是则填入，否则新建
+    var last = forms[forms.length - 1];
+    var isLastEmpty = last && !last.reporter && !last.location && !last.content && !last.repairer && !last.process && !last.remark;
+    if (isLastEmpty) {
+      targetForm = last;
+    } else {
+      targetForm = createFormData();
+      forms.push(targetForm);
+    }
+  }
+
+  // 增量填入：默认不覆盖已有非空字段，勾选"覆盖"才覆盖
+  var overwrite = document.getElementById('overwriteCheck').checked;
+  var filledFields = [];
+  var skippedFields = [];
+
+  function setField(field, value, label) {
+    if (!value) return;
+    if (!overwrite && targetForm[field]) {
+      skippedFields.push(label);
+      return;
+    }
+    targetForm[field] = value;
+    filledFields.push(label);
+  }
+
+  setField('reporter', p.reporter, '报修人');
+  setField('location', p.location, '地点');
+  setField('reportTime', p.reportTime, '报修时间');
+  setField('phone', p.phone, '电话');
+  setField('content', p.content, '报修内容');
+  setField('process', p.process, '故障处理记录');
+  setField('repairer', p.repairer, '维修人员');
+  setField('repairTime', p.repairTime, '维修时间');
+  setField('remark', p.remark, '备注');
+  setField('status', p.status, '处理状态');
+
+  renderAll();
+  isDirty = true;
+  autoSave();
+  pushHistory();
+  closePasteModal();
+
+  // 滚动到目标表单
+  setTimeout(function() {
+    var el = document.getElementById('card_' + targetForm.id);
+    if (el) el.scrollIntoView({ behavior: 'smooth', block: 'start' });
+  }, 50);
+
+  var msg = '';
+  if (filledFields.length > 0) msg += '已填入：' + filledFields.join('、');
+  if (skippedFields.length > 0) msg += (msg ? '；' : '') + '已跳过（已有内容）：' + skippedFields.join('、');
+  if (!msg) msg = '未识别到可填入的字段';
+  showToast(msg);
+}
+
+// ============================================================
+// 键盘快捷键
+// ============================================================
+document.addEventListener('keydown', function(e) {
+  // Ctrl+Shift+V 打开智能粘贴
+  if ((e.ctrlKey || e.metaKey) && e.shiftKey && e.key === 'V') {
+    e.preventDefault();
+    openPasteModal();
+    return;
+  }
+  // Ctrl+Z 撤销
+  if ((e.ctrlKey || e.metaKey) && e.key === 'z' && !e.shiftKey) {
+    var tag = (e.target.tagName || '').toLowerCase();
+    if (tag !== 'textarea' && tag !== 'input') {
+      e.preventDefault();
+      undo();
+    }
+    return;
+  }
+  // Ctrl+Y 或 Ctrl+Shift+Z 恢复（重做）
+  if ((e.ctrlKey || e.metaKey) && (e.key === 'y' || (e.key === 'z' && e.shiftKey))) {
+    e.preventDefault();
+    redo();
+    return;
+  }
+  // 模态框内 Enter 识别（非textarea换行时）
+  if (document.getElementById('pasteModal').classList.contains('show')) {
+    if (e.key === 'Escape') {
+      closePasteModal();
+    }
+  }
+});
+
+// 模态框中 Ctrl+Enter 直接识别并填入
+document.addEventListener('keydown', function(e) {
+  if (document.getElementById('pasteModal').classList.contains('show')) {
+    if ((e.ctrlKey || e.metaKey) && e.key === 'Enter') {
+      e.preventDefault();
+      doParse();
+      setTimeout(doFill, 100);
+    }
+  }
+});
+
+// ============================================================
+// 导出通用工具
+// ============================================================
+function getValidForms() {
+  return forms.filter(function(f) {
+    return f.reporter || f.location || f.content || f.repairer || f.process || f.remark;
+  });
+}
+
+// 按导出菜单中的日期范围筛选报修单（按报修时间）
+function getFilteredForms() {
+  var valid = getValidForms();
+  var start = document.getElementById('filterStart').value;
+  var end = document.getElementById('filterEnd').value;
+  if (!start && !end) return valid;
+  return valid.filter(function(f) {
+    if (!f.reportTime) return false;
+    var d = f.reportTime.substring(0, 10); // YYYY-MM-DD
+    if (start && d < start) return false;
+    if (end && d > end) return false;
+    return true;
+  });
+}
+
+// 日期变化时更新筛选提示
+function updateFilterCount() {
+  var start = document.getElementById('filterStart').value;
+  var end = document.getElementById('filterEnd').value;
+  var hint = document.getElementById('filterHint');
+  if (!start && !end) {
+    hint.textContent = '不填则导出全部（共 ' + getValidForms().length + ' 张）';
+    return;
+  }
+  var count = getFilteredForms().length;
+  var range = '';
+  if (start && end) range = start + ' 至 ' + end;
+  else if (start) range = start + ' 起';
+  else range = '至 ' + end;
+  hint.textContent = range + '：共 ' + count + ' 张';
+}
+
+function getDateStr() {
+  var d = new Date();
+  var pad = function(n) { return n < 10 ? '0' + n : n; };
+  return d.getFullYear() + pad(d.getMonth()+1) + pad(d.getDate()) +
+         '_' + pad(d.getHours()) + pad(d.getMinutes());
+}
+
+function downloadFile(content, filename, mimeType) {
+  var blob = new Blob([content], { type: mimeType });
+  var url = URL.createObjectURL(blob);
+  var a = document.createElement('a');
+  a.href = url;
+  a.download = filename;
+  document.body.appendChild(a);
+  a.click();
+  document.body.removeChild(a);
+  setTimeout(function() { URL.revokeObjectURL(url); }, 100);
+}
+
+// ============================================================
+// 备份 / 恢复
+// ============================================================
+function exportBackup() {
+  document.getElementById('exportMenu').classList.remove('show');
+  var backup = {
+    version: 1,
+    exportTime: new Date().toISOString(),
+    count: forms.length,
+    data: snapshotForms()
+  };
+  var json = JSON.stringify(backup, null, 2);
+  var dateStr = new Date().toISOString().slice(0, 10);
+  downloadFile([json], '报修系统备份_' + dateStr + '.json', 'application/json');
+  showToast('已导出备份文件，共 ' + forms.length + ' 张报修单');
+}
+
+function importBackup() {
+  document.getElementById('exportMenu').classList.remove('show');
+  var input = document.createElement('input');
+  input.type = 'file';
+  input.accept = '.json,application/json';
+  input.onchange = function(e) {
+    var file = e.target.files[0];
+    if (!file) return;
+    var reader = new FileReader();
+    reader.onload = function(ev) {
+      try {
+        var backup = JSON.parse(ev.target.result);
+        if (!backup.data || !Array.isArray(backup.data)) {
+          showToast('备份文件格式不正确');
+          return;
+        }
+        if (!confirm('确定要导入备份吗？当前的 ' + forms.length + ' 张报修单将被覆盖为备份中的 ' + backup.data.length + ' 张。')) {
+          return;
+        }
+        forms = backup.data.map(function(d) {
+          var f = createFormData();
+          for (var k in d) f[k] = d[k];
+          return f;
+        });
+        if (forms.length === 0) forms.push(createFormData());
+        saveToLocalStorage();
+        isDirty = false;
+        // 重置历史记录
+        historyStack = [JSON.parse(JSON.stringify(snapshotForms()))];
+        historyIndex = 0;
+        updateUndoRedoButtons();
+        renderAll();
+        showToast('已恢复 ' + forms.length + ' 张报修单');
+      } catch (err) {
+        showToast('导入失败：文件无法解析');
+      }
+    };
+    reader.readAsText(file);
+  };
+  input.click();
+}
+
+// ============================================================
+// 设置 / 自动保存 / 自动备份
+// ============================================================
+var SETTINGS_KEY = 'repair_settings_v1';
+var BACKUP_KEY = 'repair_autobackups_v1';
+var settings = {
+  autoSaveInterval: 5,
+  autoBackupInterval: 30,
+  maxBackups: 5
+};
+var autoSaveTimer = null;
+var autoBackupTimer = null;
+
+function loadSettings() {
+  try {
+    var raw = localStorage.getItem(SETTINGS_KEY);
+    if (raw) {
+      var s = JSON.parse(raw);
+      settings.autoSaveInterval = (s.autoSaveInterval !== undefined) ? s.autoSaveInterval : 5;
+      settings.autoBackupInterval = (s.autoBackupInterval !== undefined) ? s.autoBackupInterval : 30;
+      settings.maxBackups = (s.maxBackups !== undefined) ? s.maxBackups : 5;
+    }
+  } catch (e) {}
+}
+
+function saveSettings() {
+  try {
+    localStorage.setItem(SETTINGS_KEY, JSON.stringify(settings));
+  } catch (e) {}
+}
+
+function startAutoSave() {
+  if (autoSaveTimer) clearInterval(autoSaveTimer);
+  if (settings.autoSaveInterval > 0) {
+    autoSaveTimer = setInterval(function() {
+      saveToLocalStorage();
+    }, settings.autoSaveInterval * 60 * 1000);
+  }
+}
+
+function startAutoBackup() {
+  if (autoBackupTimer) clearInterval(autoBackupTimer);
+  if (settings.autoBackupInterval > 0) {
+    autoBackupTimer = setInterval(function() {
+      createAutoBackup();
+    }, settings.autoBackupInterval * 60 * 1000);
+  }
+}
+
+function createAutoBackup(silent) {
+  getAutoBackups().then(function(backups) {
+    var snapshot = {
+      time: new Date().toISOString(),
+      count: forms.length,
+      data: snapshotForms()
+    };
+    backups.unshift(snapshot);
+    while (backups.length > settings.maxBackups) backups.pop();
+    dbPut('backups', 'list', backups).then(function() {
+      if (!silent) showToast('自动备份已创建（' + forms.length + ' 张报修单）');
+    }).catch(function() {
+      if (!silent) showToast('自动备份失败：存储空间不足');
+    });
+  });
+}
+
+function getAutoBackups() {
+  return dbGet('backups', 'list').then(function(backups) {
+    return backups || [];
+  }).catch(function() {
+    return [];
+  });
+}
+
+function restoreAutoBackup(index) {
+  getAutoBackups().then(function(backups) {
+    if (!backups[index]) return;
+    if (!confirm('确定要恢复 ' + formatBackupTime(backups[index].time) + ' 的备份吗？当前数据将被覆盖。')) return;
+    forms = backups[index].data.map(function(d) {
+      var f = createFormData();
+      for (var k in d) f[k] = d[k];
+      return f;
+    });
+    if (forms.length === 0) forms.push(createFormData());
+    saveToLocalStorage();
+    isDirty = false;
+    historyStack = [JSON.parse(JSON.stringify(snapshotForms()))];
+    historyIndex = 0;
+    updateUndoRedoButtons();
+    renderAll();
+    closeSettingsModal();
+    showToast('已恢复备份：' + formatBackupTime(backups[index].time));
+  });
+}
+
+function exportAutoBackup(index) {
+  getAutoBackups().then(function(backups) {
+    if (!backups[index]) return;
+    var backup = {
+      version: 1,
+      exportTime: backups[index].time,
+      count: backups[index].count,
+      data: backups[index].data
+    };
+    var json = JSON.stringify(backup, null, 2);
+    downloadFile([json], '自动备份_' + formatBackupTime(backups[index].time).replace(/[: ]/g, '-') + '.json', 'application/json');
+  });
+}
+
+function deleteAutoBackup(index) {
+  getAutoBackups().then(function(backups) {
+    if (!backups[index]) return;
+    if (!confirm('确定删除这个备份吗？')) return;
+    backups.splice(index, 1);
+    dbPut('backups', 'list', backups).then(function() {
+      renderBackupList();
+    });
+  });
+}
+
+function formatBackupTime(iso) {
+  try {
+    var d = new Date(iso);
+    var pad = function(n) { return n < 10 ? '0' + n : n; };
+    return d.getFullYear() + '-' + pad(d.getMonth()+1) + '-' + pad(d.getDate()) + ' ' + pad(d.getHours()) + ':' + pad(d.getMinutes());
+  } catch (e) { return iso; }
+}
+
+function openSettingsModal() {
+  document.getElementById('settingsModal').classList.add('show');
+  document.getElementById('setAutoSave').value = settings.autoSaveInterval;
+  document.getElementById('setAutoBackup').value = settings.autoBackupInterval;
+  document.getElementById('setMaxBackups').value = settings.maxBackups;
+  renderBackupList();
+}
+
+function closeSettingsModal() {
+  document.getElementById('settingsModal').classList.remove('show');
+}
+
+function applySettings() {
+  var saveVal = parseInt(document.getElementById('setAutoSave').value) || 0;
+  var backupVal = parseInt(document.getElementById('setAutoBackup').value) || 0;
+  var maxVal = parseInt(document.getElementById('setMaxBackups').value) || 5;
+  if (saveVal < 0) saveVal = 0;
+  if (backupVal < 0) backupVal = 0;
+  if (maxVal < 1) maxVal = 1;
+  if (maxVal > 20) maxVal = 20;
+  settings.autoSaveInterval = saveVal;
+  settings.autoBackupInterval = backupVal;
+  settings.maxBackups = maxVal;
+  saveSettings();
+  startAutoSave();
+  startAutoBackup();
+  showToast('设置已保存' + (saveVal > 0 ? '，每' + saveVal + '分钟自动保存' : '') + (backupVal > 0 ? '，每' + backupVal + '分钟自动备份' : ''));
+}
+
+function renderBackupList() {
+  var list = document.getElementById('backupList');
+  if (!list) return;
+  getAutoBackups().then(function(backups) {
+    if (backups.length === 0) {
+      list.innerHTML = '<div class="backup-empty">暂无自动备份，到达设定时间后会自动创建</div>';
+      return;
+    }
+    var html = '';
+    backups.forEach(function(b, i) {
+      html += '<div class="backup-item">' +
+        '<div class="backup-info">' +
+          '<span class="backup-time">' + formatBackupTime(b.time) + '</span>' +
+          '<span class="backup-count">' + b.count + ' 张报修单</span>' +
+        '</div>' +
+        '<div class="backup-actions">' +
+          '<button class="btn btn-gray btn-sm" onclick="restoreAutoBackup(' + i + ')">恢复</button>' +
+          '<button class="btn btn-gray btn-sm" onclick="exportAutoBackup(' + i + ')">导出</button>' +
+          '<button class="btn btn-danger btn-sm" onclick="deleteAutoBackup(' + i + ')">删除</button>' +
+        '</div>' +
+      '</div>';
+    });
+    list.innerHTML = html;
+  });
+}
+
+function toggleExportMenu(e) {
+  e.stopPropagation();
+  document.getElementById('exportMenu').classList.toggle('show');
+}
+
+// 点击页面其他地方关闭导出菜单
+document.addEventListener('click', function(e) {
+  var menu = document.getElementById('exportMenu');
+  if (menu && !e.target.closest('.export-dropdown')) {
+    menu.classList.remove('show');
+  }
+});
+
+// ============================================================
+// 导出 PDF（通过浏览器打印，用户选择"另存为PDF"）
+// ============================================================
+function exportPDF() {
+  document.getElementById('exportMenu').classList.remove('show');
+  var valid = getFilteredForms();
+  if (valid.length === 0) {
+    showToast('没有可导出的报修单');
+    return;
+  }
+  // 临时隐藏不在筛选范围内的表单，并给可见表单标记奇偶位置（用于分页）
+  var validIds = valid.map(function(f) { return f.id; });
+  var cards = document.querySelectorAll('.repair-card');
+  var hiddenCards = [];
+  var visibleCards = [];
+  cards.forEach(function(card) {
+    var cardId = card.getAttribute('data-form-id');
+    if (validIds.indexOf(cardId) === -1) {
+      card.classList.add('print-hidden');
+      hiddenCards.push(card);
+    } else {
+      visibleCards.push(card);
+    }
+  });
+  // 按可见顺序标记：奇数位留间距，偶数位后分页，最后一个不分页
+  visibleCards.forEach(function(card, i) {
+    if ((i + 1) % 2 === 1) card.classList.add('print-odd');
+    else card.classList.add('print-even');
+  });
+  if (visibleCards.length > 0) {
+    visibleCards[visibleCards.length - 1].classList.remove('print-even');
+    visibleCards[visibleCards.length - 1].classList.add('print-last');
+  }
+  showToast('正在打开打印窗口，请选择"另存为PDF"');
+  var restore = function() {
+    hiddenCards.forEach(function(card) { card.classList.remove('print-hidden'); });
+    visibleCards.forEach(function(card) {
+      card.classList.remove('print-odd', 'print-even', 'print-last');
+    });
+  };
+  window.onafterprint = restore;
+  setTimeout(function() {
+    window.print();
+    setTimeout(restore, 1000); // 兜底恢复
+  }, 300);
+}
+
+// ============================================================
+// 导出 Excel（HTML格式.xls，Excel可直接打开）
+// ============================================================
+function exportExcel() {
+  document.getElementById('exportMenu').classList.remove('show');
+  var valid = getFilteredForms();
+  if (valid.length === 0) { showToast('所有报修单都是空白的'); return; }
+
+  var headers = ['序号','报修人','地点','报修时间','电话','报修内容','故障处理记录','维修人员','维修时间','备注','处理状态'];
+  var rows = '<tr style="background:#1a3a6b;color:#fff;font-weight:bold;">';
+  headers.forEach(function(h) { rows += '<th style="padding:8px;border:1px solid #999;">' + h + '</th>'; });
+  rows += '</tr>';
+
+  valid.forEach(function(f, i) {
+    rows += '<tr>';
+    var cells = [
+      i + 1,
+      f.reporter,
+      f.location,
+      formatDT(f.reportTime),
+      f.phone,
+      f.content,
+      f.process,
+      f.repairer,
+      formatDT(f.repairTime),
+      f.remark,
+      f.status
+    ];
+    cells.forEach(function(c, ci) {
+      var style = 'padding:6px 8px;border:1px solid #ccc;vertical-align:top;';
+      if (ci === 10 && c === '完成') style += 'color:#2eaa5b;font-weight:bold;';
+      if (ci === 10 && c === '处理中') style += 'color:#e6a23c;font-weight:bold;';
+      rows += '<td style="' + style + '">' + esc(String(c || '')) + '</td>';
+    });
+    rows += '</tr>';
+  });
+
+  var html =
+'<html xmlns:o="urn:schemas-microsoft-com:office:office" xmlns:x="urn:schemas-microsoft-com:office:excel" xmlns="http://www.w3.org/TR/REC-html40">' +
+'<head><meta charset="utf-8">' +
+'<!--[if gte mso 9]><xml><x:ExcelWorkbook><x:ExcelWorksheets><x:ExcelWorksheet>' +
+'<x:Name>维修记录</x:Name><x:WorksheetOptions><x:DisplayGridlines/></x:WorksheetOptions>' +
+'</x:ExcelWorksheet></x:ExcelWorksheets></x:ExcelWorkbook></xml><![endif]-->' +
+'<style>table{border-collapse:collapse;font-family:"Microsoft YaHei",sans-serif;font-size:11pt;}th{text-align:center;}</style>' +
+'</head><body>' +
+'<h2 style="text-align:center;font-family:"Microsoft YaHei",sans-serif;">多媒体教室设备报修记录</h2>' +
+'<table border="1" cellspacing="0" cellpadding="0">' + rows + '</table>' +
+'</body></html>';
+
+  downloadFile(['\ufeff', html], '维修记录_' + getDateStr() + '.xls', 'application/vnd.ms-excel');
+  showToast('Excel 文件已导出，共 ' + valid.length + ' 条记录');
+}
+
+// ============================================================
+// 导出 CSV
+// ============================================================
+function exportCSV() {
+  document.getElementById('exportMenu').classList.remove('show');
+  var valid = getFilteredForms();
+  if (valid.length === 0) { showToast('所有报修单都是空白的'); return; }
+
+  var headers = ['序号','报修人','地点','报修时间','电话','报修内容','故障处理记录','维修人员','维修时间','备注','处理状态'];
+  var lines = [headers.join(',')];
+  valid.forEach(function(f, i) {
+    var row = [
+      i + 1, f.reporter, f.location, formatDT(f.reportTime), f.phone,
+      f.content, f.process, f.repairer, formatDT(f.repairTime),
+      f.remark, f.status
+    ].map(function(v) {
+      var s = String(v || '').replace(/"/g, '""');
+      return '"' + s + '"';
+    });
+    lines.push(row.join(','));
+  });
+
+  downloadFile(['\ufeff', lines.join('\n')], '维修记录_' + getDateStr() + '.csv', 'text/csv;charset=utf-8');
+  showToast('CSV 文件已导出，共 ' + valid.length + ' 条记录');
+}
+
+// ============================================================
+// 导出 JSON
+// ============================================================
+function exportJSON() {
+  document.getElementById('exportMenu').classList.remove('show');
+  var valid = getFilteredForms();
+  if (valid.length === 0) { showToast('所有报修单都是空白的'); return; }
+
+  var data = valid.map(function(f, i) {
+    return {
+      序号: i + 1,
+      报修人: f.reporter,
+      地点: f.location,
+      报修时间: formatDT(f.reportTime),
+      电话: f.phone,
+      报修内容: f.content,
+      故障处理记录: f.process,
+      维修人员: f.repairer,
+      维修时间: formatDT(f.repairTime),
+      备注: f.remark,
+      处理状态: f.status
+    };
+  });
+
+  downloadFile(JSON.stringify(data, null, 2), '维修记录_' + getDateStr() + '.json', 'application/json');
+  showToast('JSON 文件已导出，共 ' + valid.length + ' 条记录');
+}
+
+// ============================================================
+// 导出纯文本 TXT
+// ============================================================
+function exportTXT() {
+  document.getElementById('exportMenu').classList.remove('show');
+  var valid = getFilteredForms();
+  if (valid.length === 0) { showToast('所有报修单都是空白的'); return; }
+
+  var sep = '========================================';
+  var lines = ['多媒体教室设备报修记录', '导出时间：' + new Date().toLocaleString(), ''];
+  valid.forEach(function(f, i) {
+    lines.push(sep);
+    lines.push('【报修单 ' + (i + 1) + '】');
+    lines.push('报修人：' + (f.reporter || '—'));
+    lines.push('地点：' + (f.location || '—'));
+    lines.push('报修时间：' + (formatDT(f.reportTime) || '—'));
+    lines.push('电话：' + (f.phone || '—'));
+    lines.push('报修内容：' + (f.content || '—'));
+    lines.push('故障处理记录：' + (f.process || '—'));
+    lines.push('维修人员：' + (f.repairer || '—'));
+    lines.push('维修时间：' + (formatDT(f.repairTime) || '—'));
+    lines.push('备注：' + (f.remark || '—'));
+    lines.push('处理状态：' + (f.status || '—'));
+    lines.push('');
+  });
+  lines.push(sep);
+  lines.push('共 ' + valid.length + ' 条维修记录');
+
+  downloadFile(['\ufeff', lines.join('\n')], '维修记录_' + getDateStr() + '.txt', 'text/plain;charset=utf-8');
+  showToast('文本文件已导出，共 ' + valid.length + ' 条记录');
+}
+
+// ============================================================
+// 导出 Word（A4，每页2张表）
+// ============================================================
+function exportWord() {
+  document.getElementById('exportMenu').classList.remove('show');
+  if (forms.length === 0) {
+    showToast('没有可导出的报修单');
+    return;
+  }
+
+  var validForms = getFilteredForms();
+  if (validForms.length === 0) {
+    showToast('所有报修单都是空白的，请先填写内容');
+    return;
+  }
+
+  var formsHtml = '';
+  validForms.forEach(function(f, idx) {
+    var imgHtml = f.processImage
+      ? '<img src="' + f.processImage + '" style="max-width:120px;max-height:65px;margin-top:3px;border:1px solid #ddd;">'
+      : '';
+    var isSecond = (idx + 1) % 2 === 0;
+    var isFirst = (idx + 1) % 2 === 1;
+    // 匹配参考模板：标题独立段落(与下段同页)，表格无灰色标签底，偶数表后分页
+    var sheetStyle = 'page-break-after:' + (isSecond ? 'always' : 'avoid') +
+      ';margin-bottom:' + (isFirst ? '12pt' : '0') + ';page-break-inside:avoid;';
+    formsHtml +=
+    '<div class="repair-sheet" style="' + sheetStyle + '">' +
+      '<p style="text-align:center;font-size:18pt;font-weight:bold;font-family:SimSun;margin:0 0 4pt 0;page-break-after:avoid;">多媒体教室设备报修单</p>' +
+      '<table border="1" cellspacing="0" cellpadding="3" style="width:100%;border-collapse:collapse;font-size:10.5pt;table-layout:fixed;font-family:SimSun;">' +
+        '<tr style="height:17pt;">' +
+          '<td style="width:15%;text-align:center;font-weight:bold;white-space:nowrap;overflow:hidden;">报修时间</td>' +
+          '<td style="width:35%;">' + formatDTWord(f.reportTime) + '</td>' +
+          '<td style="width:15%;text-align:center;font-weight:bold;white-space:nowrap;overflow:hidden;">联系电话</td>' +
+          '<td style="width:35%;">' + esc(f.phone) + '</td>' +
+        '</tr>' +
+        '<tr style="height:17pt;">' +
+          '<td style="text-align:center;font-weight:bold;white-space:nowrap;overflow:hidden;">报修人</td>' +
+          '<td>' + esc(f.reporter) + '</td>' +
+          '<td style="text-align:center;font-weight:bold;white-space:nowrap;overflow:hidden;">地点</td>' +
+          '<td>' + esc(f.location) + '</td>' +
+        '</tr>' +
+        '<tr style="height:55pt;">' +
+          '<td style="text-align:center;font-weight:bold;vertical-align:top;white-space:nowrap;overflow:hidden;">报修内容</td>' +
+          '<td colspan="3" style="vertical-align:top;line-height:1.5;">' + esc(f.content) + '</td>' +
+        '</tr>' +
+        '<tr style="height:17pt;">' +
+          '<td style="text-align:center;font-weight:bold;white-space:nowrap;overflow:hidden;">维修人员</td>' +
+          '<td>' + esc(f.repairer) + '</td>' +
+          '<td style="text-align:center;font-weight:bold;white-space:nowrap;overflow:hidden;">维修时间</td>' +
+          '<td>' + formatDTWord(f.repairTime) + '</td>' +
+        '</tr>' +
+        '<tr style="height:75pt;">' +
+          '<td style="text-align:center;font-weight:bold;vertical-align:top;white-space:nowrap;overflow:hidden;">故障处理记录</td>' +
+          '<td colspan="3" style="vertical-align:top;line-height:1.5;">' + esc(f.process) + '<br>' + imgHtml + '</td>' +
+        '</tr>' +
+        '<tr style="height:22pt;">' +
+          '<td style="text-align:center;font-weight:bold;white-space:nowrap;overflow:hidden;">处理状态</td>' +
+          '<td colspan="3" style="font-weight:bold;">' + esc(f.status) + '</td>' +
+        '</tr>' +
+        '<tr style="height:36pt;">' +
+          '<td style="text-align:center;font-weight:bold;vertical-align:top;white-space:nowrap;overflow:hidden;">备注</td>' +
+          '<td colspan="3" style="vertical-align:top;line-height:1.5;">' + esc(f.remark) + '</td>' +
+        '</tr>' +
+      '</table>' +
+    '</div>';
+  });
+
+  var html =
+'<html xmlns:o="urn:schemas-microsoft-com:office:office" xmlns:w="urn:schemas-microsoft-com:office:word" xmlns="http://www.w3.org/TR/REC-html40">' +
+'<head>' +
+'<meta charset="utf-8">' +
+'<title>多媒体维修单</title>' +
+'<!--[if gte mso 9]>' +
+'<xml>' +
+'<w:WordDocument>' +
+'<w:View>Print</w:View>' +
+'<w:Zoom>100</w:Zoom>' +
+'<w:DoNotOptimizeForBrowser/>' +
+'</w:WordDocument>' +
+'</xml>' +
+'<![endif]-->' +
+'<style>' +
+'@page { size: 21cm 29.7cm; margin: 2.54cm 3.17cm; mso-page-orientation: portrait; }' +
+'body { font-family: "SimSun", serif; margin:0; padding:0; }' +
+'.repair-sheet { page-break-inside: avoid; }' +
+'table { page-break-inside: avoid; }' +
+'</style>' +
+'</head>' +
+'<body>' + formsHtml + '</body>' +
+'</html>';
+
+  downloadFile(['\ufeff', html], '多媒体维修单_' + getDateStr() + '.doc', 'application/msword');
+  showToast('Word 文件已导出，共 ' + validForms.length + ' 张报修单');
+}
+
+// ============================================================
+// 初始化：优先从 IndexedDB 恢复，否则创建空白单
+// ============================================================
+loadSettings();
+loadFromLocalStorage().then(function(loaded) {
+  if (!loaded) {
+    forms.push(createFormData());
+  }
+  renderAll();
+  updateFilterCount();
+  restoreScrollPosition();
+  startAutoSave();
+  startAutoBackup();
+  // 初始化历史记录
+  setTimeout(function() {
+    historyStack.push(JSON.parse(JSON.stringify(snapshotForms())));
+    historyIndex = 0;
+    updateUndoRedoButtons();
+  }, 100);
+});
+window.addEventListener('scroll', saveScrollPosition);
+window.addEventListener('beforeunload', function(e) {
+  saveScrollPosition();
+  // 关闭页面前自动创建一份备份（静默，不弹提示）
+  try { createAutoBackup(true); } catch (err) {}
+  if (isDirty) {
+    e.preventDefault();
+    e.returnValue = '您有未保存的修改，确定要离开吗？';
+    return e.returnValue;
+  }
+});
+</script>
+</body>
+</html>
